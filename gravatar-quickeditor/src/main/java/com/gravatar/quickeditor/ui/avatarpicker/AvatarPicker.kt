@@ -460,18 +460,6 @@ private val SectionError.buttonTextRes: Int
         -> R.string.gravatar_qe_avatar_picker_error_retry_cta
     }
 
-private val AvatarUpdateType.successStringRes: Int
-    @StringRes get() = when (this) {
-        AvatarUpdateType.RATING -> R.string.gravatar_qe_avatar_picker_rating_update_success
-        AvatarUpdateType.ALT_TEXT -> R.string.gravatar_qe_avatar_picker_alt_text_update_success
-    }
-
-private val AvatarUpdateType.errorStringRes: Int
-    @StringRes get() = when (this) {
-        AvatarUpdateType.RATING -> R.string.gravatar_qe_avatar_picker_rating_update_error
-        AvatarUpdateType.ALT_TEXT -> R.string.gravatar_qe_avatar_picker_alt_text_update_error
-    }
-
 private val SectionError.event: AvatarPickerEvent
     get() = when (this) {
         is SectionError.InvalidToken -> AvatarPickerEvent.HandleAuthFailureTapped

@@ -1,6 +1,8 @@
 package com.gravatar.quickeditor.ui.avatarpicker
 
 import android.net.Uri
+import androidx.annotation.StringRes
+import com.gravatar.quickeditor.R
 import java.io.File
 
 internal sealed class AvatarPickerAction {
@@ -29,3 +31,15 @@ internal enum class AvatarUpdateType {
     RATING,
     ALT_TEXT,
 }
+
+internal val AvatarUpdateType.successStringRes: Int
+    @StringRes get() = when (this) {
+        AvatarUpdateType.RATING -> R.string.gravatar_qe_avatar_picker_rating_update_success
+        AvatarUpdateType.ALT_TEXT -> R.string.gravatar_qe_avatar_picker_alt_text_update_success
+    }
+
+internal val AvatarUpdateType.errorStringRes: Int
+    @StringRes get() = when (this) {
+        AvatarUpdateType.RATING -> R.string.gravatar_qe_avatar_picker_rating_update_error
+        AvatarUpdateType.ALT_TEXT -> R.string.gravatar_qe_avatar_picker_alt_text_update_error
+    }
