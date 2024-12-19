@@ -73,18 +73,9 @@ internal class AvatarPickerViewModel(
             is AvatarPickerEvent.AvatarDeleteSelected -> deleteAvatar(event.avatarId)
             AvatarPickerEvent.AvatarDeleteAlertDismissed -> hideNonSelectedAvatarAlert()
             is AvatarPickerEvent.AvatarRatingSelected -> updateAvatar(event.avatarId, event.rating)
-            is AvatarPickerEvent.AvatarAltTextTapped -> {
-                _uiState.value.emailAvatars?.avatars?.firstOrNull { it.imageId == event.avatarId }?.let {
-                    viewModelScope.launch {
-                        _actions.send(AvatarPickerAction.LaunchAvatarAltText(it))
-                    }
-                }
-            }
-
-            is AvatarPickerEvent.AvatarAltTextChanged -> updateAvatar(
-                avatarId = event.avatarId,
-                altText = event.newAltText,
-            )
+            is AvatarPickerEvent.AvatarAltTextTapped -> launchAltTextEditor(event.avatarId)
+            is AvatarPickerEvent.AvatarAltTextSaveTapped -> updateAltText()
+            is AvatarPickerEvent.AvatarAltTextChange -> updateUiStateWithNewAltText(event.newAltText)
         }
     }
 
@@ -105,11 +96,21 @@ internal class AvatarPickerViewModel(
                         }
                     },
                 )
-                currentState.copy(emailAvatars = emailAvatars)
+                currentState.copy(
+                    emailAvatars = emailAvatars,
+                    updatingAltText = updateType == AvatarUpdateType.ALT_TEXT,
+                )
             }
             when (avatarRepository.updateAvatar(email, avatarId, rating, altText)) {
                 is GravatarResult.Success -> {
                     _actions.send(AvatarPickerAction.AvatarUpdated(updateType))
+                    _uiState.update { currentState ->
+                        currentState.copy(
+                            altTextAvatarId = null,
+                            updatingAltText = false,
+                            newAltText = null,
+                        )
+                    }
                 }
 
                 is GravatarResult.Failure -> {
@@ -123,7 +124,10 @@ internal class AvatarPickerViewModel(
                                 }
                             },
                         )
-                        currentState.copy(emailAvatars = emailAvatars)
+                        currentState.copy(
+                            emailAvatars = emailAvatars,
+                            updatingAltText = false,
+                        )
                     }
                     _actions.send(AvatarPickerAction.AvatarUpdateFailed(updateType))
                 }
@@ -449,6 +453,38 @@ internal class AvatarPickerViewModel(
                 }
             }
             .launchIn(viewModelScope)
+    }
+
+    private fun updateUiStateWithNewAltText(newAltText: String) {
+        viewModelScope.launch {
+            _uiState.update { currentState ->
+                currentState.copy(
+                    newAltText = newAltText,
+                )
+            }
+        }
+    }
+
+    private fun launchAltTextEditor(avatarId: String) {
+        viewModelScope.launch {
+            _uiState.value.emailAvatars?.avatars?.firstOrNull { it.imageId == avatarId }?.let {
+                _actions.send(AvatarPickerAction.LaunchAvatarAltText)
+            }
+            _uiState.update { currentState ->
+                currentState.copy(
+                    altTextAvatarId = avatarId,
+                )
+            }
+        }
+    }
+
+    private fun updateAltText() {
+        _uiState.value.altTextSectionUiState?.let { altTextState ->
+            updateAvatar(
+                avatarId = altTextState.avatar.imageId,
+                altText = altTextState.altText,
+            )
+        }
     }
 
     private val QuickEditorError.asSectionError: SectionError

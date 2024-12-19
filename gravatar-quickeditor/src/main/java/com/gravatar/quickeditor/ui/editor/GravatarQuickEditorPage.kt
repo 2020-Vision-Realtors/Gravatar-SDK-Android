@@ -8,12 +8,10 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.navArgument
 import androidx.navigation.navOptions
 import com.gravatar.quickeditor.QuickEditorContainer
 import com.gravatar.quickeditor.ui.alttext.AltTextSection
@@ -83,9 +81,9 @@ internal fun GravatarQuickEditorPage(
                 AvatarPicker(
                     onAvatarSelected = onAvatarSelected,
                     onSessionExpired = { navController.navigate(QuickEditorPage.OAUTH.name) },
-                    onAltTextTapped = { avatarId ->
+                    onAltTextTapped = {
                         navController.navigate(
-                            route = "${EditorNavDestinations.ALT_TEXT.name}/$avatarId",
+                            route = EditorNavDestinations.ALT_TEXT.name,
                             navOptions = navOptions {
                                 popUpTo(EditorNavDestinations.AVATAR_SELECTION.name) { saveState = true }
                             },
@@ -95,13 +93,10 @@ internal fun GravatarQuickEditorPage(
                 )
             }
             composable(
-                route = "${EditorNavDestinations.ALT_TEXT.name}/{avatarId}",
-                arguments = listOf(navArgument("avatarId") { type = NavType.StringType }),
+                route = EditorNavDestinations.ALT_TEXT.name,
             ) {
-                val avatarId = requireNotNull(it.arguments?.getString("avatarId"))
                 AltTextSection(
                     onBackPressed = { navController.popBackStack() },
-                    avatarId = avatarId,
                     viewModel = editorViewModel,
                     modifier = Modifier.padding(16.dp),
                 )
@@ -164,9 +159,9 @@ internal fun GravatarQuickEditorPage(
                 AvatarPicker(
                     onAvatarSelected = onAvatarSelected,
                     onSessionExpired = { onDismiss(GravatarQuickEditorDismissReason.InvalidToken) },
-                    onAltTextTapped = { avatarId ->
+                    onAltTextTapped = {
                         navController.navigate(
-                            route = "${EditorNavDestinations.ALT_TEXT.name}/$avatarId",
+                            route = EditorNavDestinations.ALT_TEXT.name,
                             navOptions = navOptions {
                                 popUpTo(EditorNavDestinations.AVATAR_SELECTION.name) { saveState = true }
                             },
@@ -176,13 +171,10 @@ internal fun GravatarQuickEditorPage(
                 )
             }
             composable(
-                route = "${EditorNavDestinations.ALT_TEXT.name}/{avatarId}",
-                arguments = listOf(navArgument("avatarId") { type = NavType.StringType }),
+                route = EditorNavDestinations.ALT_TEXT.name,
             ) {
-                val avatarId = requireNotNull(it.arguments?.getString("avatarId"))
                 AltTextSection(
                     onBackPressed = { navController.popBackStack() },
-                    avatarId = avatarId,
                     viewModel = editorViewModel,
                     modifier = Modifier.padding(16.dp),
                 )

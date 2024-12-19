@@ -20,9 +20,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -35,6 +32,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
 import coil.compose.AsyncImage
 import com.gravatar.quickeditor.R
+import com.gravatar.quickeditor.ui.avatarpicker.AltTextSectionUiState
 import com.gravatar.quickeditor.ui.avatarpicker.AvatarPickerAction
 import com.gravatar.quickeditor.ui.avatarpicker.AvatarPickerEvent
 import com.gravatar.quickeditor.ui.avatarpicker.AvatarPickerViewModel
@@ -51,7 +49,6 @@ import java.net.URL
 @Composable
 internal fun AltTextSection(
     onBackPressed: () -> Unit,
-    avatarId: String,
     viewModel: AvatarPickerViewModel,
     modifier: Modifier = Modifier,
 ) {
@@ -61,9 +58,6 @@ internal fun AltTextSection(
 
     val state by viewModel.uiState.collectAsState()
     val lifecycle = LocalLifecycleOwner.current.lifecycle
-    val avatar by remember {
-        mutableStateOf(requireNotNull(state.emailAvatars?.avatars?.firstOrNull { it.imageId == avatarId }))
-    }
 
     LaunchedEffect(Unit) {
         withContext(Dispatchers.Main.immediate) {
@@ -79,18 +73,22 @@ internal fun AltTextSection(
 
     GravatarTheme {
         Box(modifier = modifier.wrapContentSize()) {
-            AltTextSection(
-                avatar = avatar,
-                onEvent = viewModel::onEvent,
-            )
+            state.altTextSectionUiState?.let { altTextState ->
+                AltTextSection(
+                    altTextState = altTextState,
+                    onEvent = viewModel::onEvent,
+                )
+            }
         }
     }
 }
 
 @Composable
-internal fun AltTextSection(avatar: Avatar, onEvent: (AvatarPickerEvent) -> Unit, modifier: Modifier = Modifier) {
-    var altText by remember { mutableStateOf(avatar.altText) }
-
+internal fun AltTextSection(
+    altTextState: AltTextSectionUiState,
+    onEvent: (AvatarPickerEvent) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     Surface(modifier = modifier.fillMaxWidth()) {
         Box(
             modifier = Modifier
@@ -127,7 +125,7 @@ internal fun AltTextSection(avatar: Avatar, onEvent: (AvatarPickerEvent) -> Unit
                     val avatarSize = 96.dp
                     val sizePx = with(LocalDensity.current) { avatarSize.roundToPx() }
                     AsyncImage(
-                        model = avatar.imageUrlWithSize(sizePx),
+                        model = altTextState.avatar.imageUrlWithSize(sizePx),
                         contentDescription = stringResource(
                             id = R.string.gravatar_qe_selectable_avatar_content_description,
                         ),
@@ -141,8 +139,10 @@ internal fun AltTextSection(avatar: Avatar, onEvent: (AvatarPickerEvent) -> Unit
                             .clip(RoundedCornerShape(cornerRadius)),
                     )
                     BasicTextField(
-                        value = altText,
-                        onValueChange = { newText -> altText = newText },
+                        value = altTextState.altText,
+                        onValueChange = {
+                            onEvent(AvatarPickerEvent.AvatarAltTextChange(it))
+                        },
                         textStyle = LocalTextStyle.current.copy(color = MaterialTheme.colorScheme.onSurface),
                         modifier = Modifier
                             .fillMaxWidth()
@@ -151,11 +151,10 @@ internal fun AltTextSection(avatar: Avatar, onEvent: (AvatarPickerEvent) -> Unit
                 }
                 QEButton(
                     buttonText = stringResource(R.string.gravatar_qe_avatar_alt_text_save_button),
-                    onClick = {
-                        onEvent(AvatarPickerEvent.AvatarAltTextChanged(avatarId = avatar.imageId, newAltText = altText))
-                    },
+                    onClick = { onEvent(AvatarPickerEvent.AvatarAltTextSaveTapped) },
                     modifier = Modifier.padding(top = 16.dp),
-                    enabled = altText != avatar.altText,
+                    enabled = altTextState.isSaveButtonEnabled,
+                    loading = altTextState.isUpdating,
                 )
             }
         }
@@ -171,13 +170,18 @@ private fun Avatar.imageUrlWithSize(sizePx: Int) = imageUrl.toURL()?.let { url -
 private fun AltTextSectionPreview() {
     GravatarTheme {
         AltTextSection(
-            avatar = Avatar {
-                imageUrl = URI.create("https://gravatar.com/avatar/test")
-                imageId = "1"
-                rating = Avatar.Rating.G
-                altText = "alt"
-                updatedDate = ""
-            },
+            altTextState = AltTextSectionUiState(
+                avatar = Avatar {
+                    imageUrl = URI.create("https://gravatar.com/avatar/test")
+                    imageId = "1"
+                    rating = Avatar.Rating.G
+                    altText = "alt"
+                    updatedDate = ""
+                },
+                isUpdating = false,
+                altText = "alt",
+                isSaveButtonEnabled = true,
+            ),
             onEvent = { },
         )
     }
@@ -188,13 +192,18 @@ private fun AltTextSectionPreview() {
 private fun AltTextSectionEmptyAltTextPreview() {
     GravatarTheme {
         AltTextSection(
-            avatar = Avatar {
-                imageUrl = URI.create("https://gravatar.com/avatar/test")
-                imageId = "1"
-                rating = Avatar.Rating.G
-                altText = ""
-                updatedDate = ""
-            },
+            altTextState = AltTextSectionUiState(
+                avatar = Avatar {
+                    imageUrl = URI.create("https://gravatar.com/avatar/test")
+                    imageId = "1"
+                    rating = Avatar.Rating.G
+                    altText = ""
+                    updatedDate = ""
+                },
+                isUpdating = false,
+                altText = "",
+                isSaveButtonEnabled = true,
+            ),
             onEvent = { },
         )
     }

@@ -86,7 +86,7 @@ import java.net.URI
 internal fun AvatarPicker(
     onAvatarSelected: () -> Unit,
     onSessionExpired: () -> Unit,
-    onAltTextTapped: (avatarId: String) -> Unit,
+    onAltTextTapped: () -> Unit,
     viewModel: AvatarPickerViewModel,
     cropperLauncher: CropperLauncher = UCropCropperLauncher(),
 ) {
@@ -329,7 +329,7 @@ private fun AvatarPickerAction.handle(
     cropperLauncher: CropperLauncher,
     onAvatarSelected: () -> Unit,
     onSessionExpired: () -> Unit,
-    onAltTextTapped: (avatarId: String) -> Unit,
+    onAltTextTapped: () -> Unit,
     snackState: SnackbarHostState,
     context: Context,
     uCropLauncher: ManagedActivityResultLauncher<Intent, ActivityResult>,
@@ -417,7 +417,7 @@ private fun AvatarPickerAction.handle(
             }
         }
 
-        is AvatarPickerAction.LaunchAvatarAltText -> onAltTextTapped(this@handle.avatar.imageId)
+        is AvatarPickerAction.LaunchAvatarAltText -> onAltTextTapped()
     }
 }
 

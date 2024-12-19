@@ -1220,6 +1220,124 @@ class AvatarPickerViewModelTest {
 
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
+    fun `given avatarId when updateAvatar altText succeeds then uiState is updated`() = runTest {
+        val avatarId = "avatarId"
+        val altText = "New Alt Text"
+        val oldAvatar = createAvatar(avatarId)
+        val emailAvatarsCopy = emailAvatars.copy(avatars = listOf(oldAvatar), selectedAvatarId = avatarId)
+        coEvery { avatarRepository.getAvatars(email) } returns GravatarResult.Success(emailAvatarsCopy)
+        coEvery { profileService.retrieveCatching(email) } returns GravatarResult.Success(profile)
+        val updatedAvatar = oldAvatar.copy(altText = altText)
+        coEvery {
+            avatarRepository.updateAvatar(email, avatarId, altText = altText)
+        } returns GravatarResult.Success(updatedAvatar)
+
+        viewModel = initViewModel()
+
+        advanceUntilIdle()
+
+        viewModel.uiState.test {
+            expectMostRecentItem()
+            viewModel.onEvent(AvatarPickerEvent.AvatarAltTextTapped(avatarId))
+            skipItems(1)
+            viewModel.onEvent(AvatarPickerEvent.AvatarAltTextChange(altText))
+            skipItems(1)
+            viewModel.onEvent(AvatarPickerEvent.AvatarAltTextSaveTapped)
+            val updatedEmailAvatars = emailAvatarsCopy.copy(avatars = listOf(updatedAvatar))
+            assertEquals(
+                AvatarPickerUiState(
+                    email = email,
+                    emailAvatars = updatedEmailAvatars,
+                    profile = ComponentState.Loaded(profile),
+                    avatarPickerContentLayout = avatarPickerContentLayout,
+                    scrollToIndex = 0,
+                    altTextAvatarId = avatarId,
+                    updatingAltText = true,
+                    newAltText = altText,
+                ),
+                awaitItem(),
+            )
+            assertEquals(
+                AvatarPickerUiState(
+                    email = email,
+                    emailAvatars = updatedEmailAvatars,
+                    profile = ComponentState.Loaded(profile),
+                    avatarPickerContentLayout = avatarPickerContentLayout,
+                    scrollToIndex = 0,
+                    altTextAvatarId = null,
+                    updatingAltText = false,
+                    newAltText = null,
+                ),
+                awaitItem(),
+            )
+        }
+        viewModel.actions.test {
+            assertEquals(AvatarPickerAction.LaunchAvatarAltText, awaitItem())
+            assertEquals(AvatarPickerAction.AvatarUpdated(AvatarUpdateType.ALT_TEXT), awaitItem())
+        }
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun `given avatarId when updateAvatar altText fails then uiState is reverted`() = runTest {
+        val avatarId = "avatarId"
+        val altText = "New Alt Text"
+        val oldAvatar = createAvatar(avatarId)
+        val emailAvatarsCopy = emailAvatars.copy(avatars = listOf(oldAvatar), selectedAvatarId = avatarId)
+        coEvery { avatarRepository.getAvatars(email) } returns GravatarResult.Success(emailAvatarsCopy)
+        coEvery { profileService.retrieveCatching(email) } returns GravatarResult.Success(profile)
+        val updatedAvatar = oldAvatar.copy(altText = altText)
+        coEvery {
+            avatarRepository.updateAvatar(email, avatarId, altText = altText)
+        } returns GravatarResult.Failure(QuickEditorError.Unknown)
+
+        viewModel = initViewModel()
+
+        advanceUntilIdle()
+
+        viewModel.uiState.test {
+            expectMostRecentItem()
+            viewModel.onEvent(AvatarPickerEvent.AvatarAltTextTapped(avatarId))
+            skipItems(1)
+            viewModel.onEvent(AvatarPickerEvent.AvatarAltTextChange(altText))
+            skipItems(1)
+            viewModel.onEvent(AvatarPickerEvent.AvatarAltTextSaveTapped)
+            val updatedEmailAvatars = emailAvatarsCopy.copy(avatars = listOf(updatedAvatar))
+            assertEquals(
+                AvatarPickerUiState(
+                    email = email,
+                    emailAvatars = updatedEmailAvatars,
+                    profile = ComponentState.Loaded(profile),
+                    avatarPickerContentLayout = avatarPickerContentLayout,
+                    scrollToIndex = 0,
+                    altTextAvatarId = avatarId,
+                    updatingAltText = true,
+                    newAltText = altText,
+                ),
+                awaitItem(),
+            )
+            assertEquals(
+                AvatarPickerUiState(
+                    email = email,
+                    emailAvatars = emailAvatarsCopy,
+                    profile = ComponentState.Loaded(profile),
+                    avatarPickerContentLayout = avatarPickerContentLayout,
+                    scrollToIndex = 0,
+                    altTextAvatarId = avatarId,
+                    updatingAltText = false,
+                    newAltText = altText,
+                ),
+                awaitItem(),
+            )
+        }
+        viewModel.actions.test {
+            assertEquals(AvatarPickerAction.LaunchAvatarAltText, awaitItem())
+            assertEquals(AvatarPickerAction.AvatarUpdateFailed(AvatarUpdateType.ALT_TEXT), awaitItem())
+        }
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
     fun `given rating and altText not changed when updateAvatar then avatar not updated`() = runTest {
         val avatarId = "avatarId"
         val rating = Avatar.Rating.PG
@@ -1260,7 +1378,64 @@ class AvatarPickerViewModelTest {
 
         viewModel.actions.test {
             viewModel.onEvent(AvatarPickerEvent.AvatarAltTextTapped(avatar.imageId))
-            assertEquals(AvatarPickerAction.LaunchAvatarAltText(avatar), awaitItem())
+            assertEquals(AvatarPickerAction.LaunchAvatarAltText, awaitItem())
+        }
+
+        viewModel.uiState.test {
+            assertEquals(
+                AvatarPickerUiState(
+                    email = email,
+                    emailAvatars = emailAvatarsCopy,
+                    profile = ComponentState.Loaded(profile),
+                    avatarPickerContentLayout = avatarPickerContentLayout,
+                    scrollToIndex = 0,
+                    altTextAvatarId = avatar.imageId,
+                ),
+                awaitItem(),
+            )
+        }
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun `given AvatarAltTextChange event when received then uiState is updated with new altText`() = runTest {
+        val avatar = createAvatar("1", altText = "Old Alt Text")
+        val emailAvatarsCopy = emailAvatars.copy(avatars = listOf(avatar), selectedAvatarId = avatar.imageId)
+        coEvery { avatarRepository.getAvatars(email) } returns GravatarResult.Success(emailAvatarsCopy)
+        coEvery { profileService.retrieveCatching(email) } returns GravatarResult.Success(profile)
+
+        viewModel = initViewModel()
+
+        advanceUntilIdle()
+
+        val newAltText = "New Alt Text"
+        viewModel.uiState.test {
+            expectMostRecentItem()
+            viewModel.onEvent(AvatarPickerEvent.AvatarAltTextTapped(avatar.imageId))
+            assertEquals(
+                AvatarPickerUiState(
+                    email = email,
+                    emailAvatars = emailAvatarsCopy,
+                    profile = ComponentState.Loaded(profile),
+                    avatarPickerContentLayout = avatarPickerContentLayout,
+                    scrollToIndex = 0,
+                    altTextAvatarId = avatar.imageId,
+                ),
+                awaitItem(),
+            )
+            viewModel.onEvent(AvatarPickerEvent.AvatarAltTextChange(newAltText))
+            assertEquals(
+                AvatarPickerUiState(
+                    email = email,
+                    emailAvatars = emailAvatarsCopy,
+                    profile = ComponentState.Loaded(profile),
+                    avatarPickerContentLayout = avatarPickerContentLayout,
+                    scrollToIndex = 0,
+                    altTextAvatarId = avatar.imageId,
+                    newAltText = newAltText,
+                ),
+                awaitItem(),
+            )
         }
     }
 

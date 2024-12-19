@@ -1,5 +1,6 @@
 package com.gravatar.quickeditor.ui.alttext
 
+import com.gravatar.quickeditor.ui.avatarpicker.AltTextSectionUiState
 import com.gravatar.quickeditor.ui.gravatarScreenshotTest
 import com.gravatar.restapi.models.Avatar
 import com.gravatar.ui.GravatarTheme
@@ -13,13 +14,18 @@ class AltTextSectionTest : RoborazziTest() {
     fun altTextSectionLoaded() = gravatarScreenshotTest {
         GravatarTheme {
             AltTextSection(
-                avatar = Avatar {
-                    imageUrl = URI.create("https://gravatar.com/avatar/test")
-                    imageId = "1"
-                    rating = Avatar.Rating.G
-                    altText = "alt"
-                    updatedDate = ""
-                },
+                altTextState = AltTextSectionUiState(
+                    avatar = Avatar {
+                        imageUrl = URI.create("https://gravatar.com/avatar/test")
+                        imageId = "1"
+                        rating = Avatar.Rating.G
+                        altText = "alt"
+                        updatedDate = ""
+                    },
+                    isUpdating = false,
+                    altText = "alt",
+                    isSaveButtonEnabled = false,
+                ),
                 onEvent = { },
             )
         }
@@ -30,13 +36,18 @@ class AltTextSectionTest : RoborazziTest() {
     fun altTextSectionLoadedDark() = gravatarScreenshotTest {
         GravatarTheme {
             AltTextSection(
-                avatar = Avatar {
-                    imageUrl = URI.create("https://gravatar.com/avatar/test")
-                    imageId = "1"
-                    rating = Avatar.Rating.G
-                    altText = "alt"
-                    updatedDate = ""
-                },
+                altTextState = AltTextSectionUiState(
+                    avatar = Avatar {
+                        imageUrl = URI.create("https://gravatar.com/avatar/test")
+                        imageId = "1"
+                        rating = Avatar.Rating.G
+                        altText = "alt"
+                        updatedDate = ""
+                    },
+                    isUpdating = false,
+                    altText = "alt",
+                    isSaveButtonEnabled = false,
+                ),
                 onEvent = { },
             )
         }
@@ -46,13 +57,18 @@ class AltTextSectionTest : RoborazziTest() {
     fun emptyAltTextSectionLoaded() = gravatarScreenshotTest {
         GravatarTheme {
             AltTextSection(
-                avatar = Avatar {
-                    imageUrl = URI.create("https://gravatar.com/avatar/test")
-                    imageId = "1"
-                    rating = Avatar.Rating.G
-                    altText = "alt"
-                    updatedDate = ""
-                },
+                altTextState = AltTextSectionUiState(
+                    avatar = Avatar {
+                        imageUrl = URI.create("https://gravatar.com/avatar/test")
+                        imageId = "1"
+                        rating = Avatar.Rating.G
+                        altText = "alt"
+                        updatedDate = ""
+                    },
+                    isUpdating = false,
+                    altText = "New alt text",
+                    isSaveButtonEnabled = true,
+                ),
                 onEvent = { },
             )
         }
@@ -63,13 +79,18 @@ class AltTextSectionTest : RoborazziTest() {
     fun emptyAltTextSectionLoadedDark() = gravatarScreenshotTest {
         GravatarTheme {
             AltTextSection(
-                avatar = Avatar {
-                    imageUrl = URI.create("https://gravatar.com/avatar/test")
-                    imageId = "1"
-                    rating = Avatar.Rating.G
-                    altText = "alt"
-                    updatedDate = ""
-                },
+                altTextState = AltTextSectionUiState(
+                    avatar = Avatar {
+                        imageUrl = URI.create("https://gravatar.com/avatar/test")
+                        imageId = "1"
+                        rating = Avatar.Rating.G
+                        altText = "alt"
+                        updatedDate = ""
+                    },
+                    isUpdating = false,
+                    altText = "New alt text",
+                    isSaveButtonEnabled = true,
+                ),
                 onEvent = { },
             )
         }
