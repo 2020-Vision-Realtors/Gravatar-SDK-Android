@@ -48,7 +48,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.gravatar.extensions.defaultProfile
 import com.gravatar.quickeditor.R
 import com.gravatar.quickeditor.data.repository.EmailAvatars
@@ -65,7 +64,6 @@ import com.gravatar.quickeditor.ui.components.ProfileCard
 import com.gravatar.quickeditor.ui.cropperlauncher.CropperLauncher
 import com.gravatar.quickeditor.ui.cropperlauncher.UCropCropperLauncher
 import com.gravatar.quickeditor.ui.editor.AvatarPickerContentLayout
-import com.gravatar.quickeditor.ui.editor.GravatarQuickEditorParams
 import com.gravatar.quickeditor.ui.editor.bottomsheet.DEFAULT_PAGE_HEIGHT
 import com.gravatar.quickeditor.ui.extensions.QESnackbarHost
 import com.gravatar.quickeditor.ui.extensions.QESnackbarResult
@@ -86,14 +84,10 @@ import java.net.URI
 
 @Composable
 internal fun AvatarPicker(
-    gravatarQuickEditorParams: GravatarQuickEditorParams,
-    handleExpiredSession: Boolean,
     onAvatarSelected: () -> Unit,
     onSessionExpired: () -> Unit,
-    onAltTextTapped: () -> Unit,
-    viewModel: AvatarPickerViewModel = viewModel(
-        factory = AvatarPickerViewModelFactory(gravatarQuickEditorParams, handleExpiredSession),
-    ),
+    onAltTextTapped: (avatarId: String) -> Unit,
+    viewModel: AvatarPickerViewModel,
     cropperLauncher: CropperLauncher = UCropCropperLauncher(),
 ) {
     val snackState = remember { SnackbarHostState() }
@@ -335,7 +329,7 @@ private fun AvatarPickerAction.handle(
     cropperLauncher: CropperLauncher,
     onAvatarSelected: () -> Unit,
     onSessionExpired: () -> Unit,
-    onAltTextTapped: () -> Unit,
+    onAltTextTapped: (avatarId: String) -> Unit,
     snackState: SnackbarHostState,
     context: Context,
     uCropLauncher: ManagedActivityResultLauncher<Intent, ActivityResult>,
@@ -423,7 +417,7 @@ private fun AvatarPickerAction.handle(
             }
         }
 
-        is AvatarPickerAction.LaunchAvatarAltText -> onAltTextTapped()
+        is AvatarPickerAction.LaunchAvatarAltText -> onAltTextTapped(this@handle.avatar.imageId)
     }
 }
 
@@ -469,11 +463,13 @@ private val SectionError.buttonTextRes: Int
 private val AvatarUpdateType.successStringRes: Int
     @StringRes get() = when (this) {
         AvatarUpdateType.RATING -> R.string.gravatar_qe_avatar_picker_rating_update_success
+        AvatarUpdateType.ALT_TEXT -> R.string.gravatar_qe_avatar_picker_alt_text_update_success
     }
 
 private val AvatarUpdateType.errorStringRes: Int
     @StringRes get() = when (this) {
         AvatarUpdateType.RATING -> R.string.gravatar_qe_avatar_picker_rating_update_error
+        AvatarUpdateType.ALT_TEXT -> R.string.gravatar_qe_avatar_picker_alt_text_update_error
     }
 
 private val SectionError.event: AvatarPickerEvent

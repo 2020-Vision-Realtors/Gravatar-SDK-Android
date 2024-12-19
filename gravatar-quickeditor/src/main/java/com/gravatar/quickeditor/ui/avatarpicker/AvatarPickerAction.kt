@@ -28,4 +28,5 @@ internal sealed class AvatarPickerAction {
 
 internal enum class AvatarUpdateType {
     RATING,
+    ALT_TEXT,
 }

@@ -2,16 +2,24 @@ package com.gravatar.quickeditor.ui.editor
 
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
+import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import androidx.navigation.navOptions
 import com.gravatar.quickeditor.QuickEditorContainer
-import com.gravatar.quickeditor.ui.alttext.AltText
+import com.gravatar.quickeditor.ui.alttext.AltTextSection
 import com.gravatar.quickeditor.ui.avatarpicker.AvatarPicker
+import com.gravatar.quickeditor.ui.avatarpicker.AvatarPickerViewModel
+import com.gravatar.quickeditor.ui.avatarpicker.AvatarPickerViewModelFactory
 import com.gravatar.quickeditor.ui.navigation.EditorNavDestinations
 import com.gravatar.quickeditor.ui.navigation.QuickEditorPage
 import com.gravatar.quickeditor.ui.oauth.OAuthPage
@@ -37,6 +45,12 @@ internal fun GravatarQuickEditorPage(
     onDismiss: (dismissReason: GravatarQuickEditorDismissReason) -> Unit = {},
 ) {
     val navController = rememberNavController()
+    val editorViewModel: AvatarPickerViewModel = viewModel(
+        factory = AvatarPickerViewModelFactory(
+            gravatarQuickEditorParams = gravatarQuickEditorParams,
+            handleExpiredSession = true,
+        ),
+    )
 
     NavHost(
         navController,
@@ -67,22 +81,30 @@ internal fun GravatarQuickEditorPage(
         ) {
             composable(route = EditorNavDestinations.AVATAR_SELECTION.name) {
                 AvatarPicker(
-                    gravatarQuickEditorParams = gravatarQuickEditorParams,
-                    handleExpiredSession = true,
                     onAvatarSelected = onAvatarSelected,
                     onSessionExpired = { navController.navigate(QuickEditorPage.OAUTH.name) },
-                    onAltTextTapped = {
+                    onAltTextTapped = { avatarId ->
                         navController.navigate(
-                            route = EditorNavDestinations.ALT_TEXT.name,
+                            route = "${EditorNavDestinations.ALT_TEXT.name}/$avatarId",
                             navOptions = navOptions {
                                 popUpTo(EditorNavDestinations.AVATAR_SELECTION.name) { saveState = true }
                             },
                         )
                     },
+                    viewModel = editorViewModel,
                 )
             }
-            composable(route = EditorNavDestinations.ALT_TEXT.name) {
-                AltText({ navController.popBackStack() })
+            composable(
+                route = "${EditorNavDestinations.ALT_TEXT.name}/{avatarId}",
+                arguments = listOf(navArgument("avatarId") { type = NavType.StringType }),
+            ) {
+                val avatarId = requireNotNull(it.arguments?.getString("avatarId"))
+                AltTextSection(
+                    onBackPressed = { navController.popBackStack() },
+                    avatarId = avatarId,
+                    viewModel = editorViewModel,
+                    modifier = Modifier.padding(16.dp),
+                )
             }
         }
     }
@@ -107,6 +129,10 @@ internal fun GravatarQuickEditorPage(
     onDismiss: (dismissReason: GravatarQuickEditorDismissReason) -> Unit = {},
 ) {
     val navController = rememberNavController()
+
+    val editorViewModel: AvatarPickerViewModel = viewModel(
+        factory = AvatarPickerViewModelFactory(gravatarQuickEditorParams, false),
+    )
 
     DisposableEffect(authToken) {
         QuickEditorContainer.getInstance().useInMemoryTokenStorage()
@@ -136,22 +162,30 @@ internal fun GravatarQuickEditorPage(
         ) {
             composable(route = EditorNavDestinations.AVATAR_SELECTION.name) {
                 AvatarPicker(
-                    gravatarQuickEditorParams = gravatarQuickEditorParams,
-                    handleExpiredSession = false,
                     onAvatarSelected = onAvatarSelected,
                     onSessionExpired = { onDismiss(GravatarQuickEditorDismissReason.InvalidToken) },
-                    onAltTextTapped = {
+                    onAltTextTapped = { avatarId ->
                         navController.navigate(
-                            route = EditorNavDestinations.ALT_TEXT.name,
+                            route = "${EditorNavDestinations.ALT_TEXT.name}/$avatarId",
                             navOptions = navOptions {
                                 popUpTo(EditorNavDestinations.AVATAR_SELECTION.name) { saveState = true }
                             },
                         )
                     },
+                    viewModel = editorViewModel,
                 )
             }
-            composable(route = EditorNavDestinations.ALT_TEXT.name) {
-                AltText({ navController.popBackStack() })
+            composable(
+                route = "${EditorNavDestinations.ALT_TEXT.name}/{avatarId}",
+                arguments = listOf(navArgument("avatarId") { type = NavType.StringType }),
+            ) {
+                val avatarId = requireNotNull(it.arguments?.getString("avatarId"))
+                AltTextSection(
+                    onBackPressed = { navController.popBackStack() },
+                    avatarId = avatarId,
+                    viewModel = editorViewModel,
+                    modifier = Modifier.padding(16.dp),
+                )
             }
         }
     }

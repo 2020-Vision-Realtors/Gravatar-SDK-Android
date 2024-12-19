@@ -80,6 +80,11 @@ internal class AvatarPickerViewModel(
                     }
                 }
             }
+
+            is AvatarPickerEvent.AvatarAltTextChanged -> updateAvatar(
+                avatarId = event.avatarId,
+                altText = event.newAltText,
+            )
         }
     }
 
@@ -89,7 +94,7 @@ internal class AvatarPickerViewModel(
             if (!oldAvatar.shouldUpdateRating(rating) && !oldAvatar.shouldUpdateAltText(altText)) {
                 return@launch
             }
-            val updateType = AvatarUpdateType.RATING
+            val updateType = if (rating != null) AvatarUpdateType.RATING else AvatarUpdateType.ALT_TEXT
             _uiState.update { currentState ->
                 val emailAvatars = currentState.emailAvatars?.copy(
                     avatars = currentState.emailAvatars.avatars.map { avatar ->
