@@ -73,6 +73,13 @@ internal class AvatarPickerViewModel(
             is AvatarPickerEvent.AvatarDeleteSelected -> deleteAvatar(event.avatarId)
             AvatarPickerEvent.AvatarDeleteAlertDismissed -> hideNonSelectedAvatarAlert()
             is AvatarPickerEvent.AvatarRatingSelected -> updateAvatar(event.avatarId, event.rating)
+            is AvatarPickerEvent.AvatarAltTextTapped -> {
+                _uiState.value.emailAvatars?.avatars?.firstOrNull { it.imageId == event.avatarId }?.let {
+                    viewModelScope.launch {
+                        _actions.send(AvatarPickerAction.LaunchAvatarAltText(it))
+                    }
+                }
+            }
         }
     }
 

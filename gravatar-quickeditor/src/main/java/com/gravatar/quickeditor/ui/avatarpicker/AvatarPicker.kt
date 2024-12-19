@@ -90,6 +90,7 @@ internal fun AvatarPicker(
     handleExpiredSession: Boolean,
     onAvatarSelected: () -> Unit,
     onSessionExpired: () -> Unit,
+    onAltTextTapped: () -> Unit,
     viewModel: AvatarPickerViewModel = viewModel(
         factory = AvatarPickerViewModelFactory(gravatarQuickEditorParams, handleExpiredSession),
     ),
@@ -118,6 +119,7 @@ internal fun AvatarPicker(
                         cropperLauncher = cropperLauncher,
                         onAvatarSelected = onAvatarSelected,
                         onSessionExpired = onSessionExpired,
+                        onAltTextTapped = onAltTextTapped,
                         snackState = snackState,
                         context = context,
                         uCropLauncher = uCropLauncher,
@@ -249,7 +251,9 @@ internal fun AvatarPicker(uiState: AvatarPickerUiState, onEvent: (AvatarPickerEv
                             },
                             onAvatarOptionClicked = { avatar, avatarOption ->
                                 when (avatarOption) {
-                                    AvatarOption.AltText -> Unit
+                                    AvatarOption.AltText ->
+                                        onEvent(AvatarPickerEvent.AvatarAltTextTapped(avatar.imageId))
+
                                     AvatarOption.Delete -> {
                                         confirmAvatarDeletion = avatar.imageId
                                     }
@@ -331,6 +335,7 @@ private fun AvatarPickerAction.handle(
     cropperLauncher: CropperLauncher,
     onAvatarSelected: () -> Unit,
     onSessionExpired: () -> Unit,
+    onAltTextTapped: () -> Unit,
     snackState: SnackbarHostState,
     context: Context,
     uCropLauncher: ManagedActivityResultLauncher<Intent, ActivityResult>,
@@ -417,6 +422,8 @@ private fun AvatarPickerAction.handle(
                 )
             }
         }
+
+        is AvatarPickerAction.LaunchAvatarAltText -> onAltTextTapped()
     }
 }
 
