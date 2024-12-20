@@ -36,7 +36,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
 import coil.compose.AsyncImage
 import com.gravatar.quickeditor.R
-import com.gravatar.quickeditor.ui.avatarpicker.AltTextSectionUiState
+import com.gravatar.quickeditor.ui.avatarpicker.AltTextPageUiState
 import com.gravatar.quickeditor.ui.avatarpicker.AvatarPickerAction
 import com.gravatar.quickeditor.ui.avatarpicker.AvatarPickerEvent
 import com.gravatar.quickeditor.ui.avatarpicker.AvatarPickerViewModel
@@ -56,11 +56,7 @@ import java.net.URI
 import java.net.URL
 
 @Composable
-internal fun AltTextSection(
-    onBackPressed: () -> Unit,
-    viewModel: AvatarPickerViewModel,
-    modifier: Modifier = Modifier,
-) {
+internal fun AltTextPage(onBackPressed: () -> Unit, viewModel: AvatarPickerViewModel, modifier: Modifier = Modifier) {
     BackHandler {
         onBackPressed()
     }
@@ -96,8 +92,8 @@ internal fun AltTextSection(
 
     GravatarTheme {
         Box(modifier = modifier.wrapContentSize()) {
-            state.altTextSectionUiState?.let { altTextState ->
-                AltTextSection(
+            state.altTextPageUiState?.let { altTextState ->
+                AltTextPage(
                     altTextState = altTextState,
                     onEvent = viewModel::onEvent,
                 )
@@ -112,8 +108,8 @@ internal fun AltTextSection(
 }
 
 @Composable
-internal fun AltTextSection(
-    altTextState: AltTextSectionUiState,
+internal fun AltTextPage(
+    altTextState: AltTextPageUiState,
     onEvent: (AvatarPickerEvent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -195,10 +191,10 @@ private fun Avatar.imageUrlWithSize(sizePx: Int) = imageUrl.toURL()?.let { url -
 
 @Composable
 @Preview(showBackground = true)
-private fun AltTextSectionPreview() {
+private fun AltTextPagePreview() {
     GravatarTheme {
-        AltTextSection(
-            altTextState = AltTextSectionUiState(
+        AltTextPage(
+            altTextState = AltTextPageUiState(
                 avatar = Avatar {
                     imageUrl = URI.create("https://gravatar.com/avatar/test")
                     imageId = "1"
@@ -217,10 +213,10 @@ private fun AltTextSectionPreview() {
 
 @Composable
 @Preview(showBackground = true)
-private fun AltTextSectionEmptyAltTextPreview() {
+private fun AltTextPageEmptyAltTextPreview() {
     GravatarTheme {
-        AltTextSection(
-            altTextState = AltTextSectionUiState(
+        AltTextPage(
+            altTextState = AltTextPageUiState(
                 avatar = Avatar {
                     imageUrl = URI.create("https://gravatar.com/avatar/test")
                     imageId = "1"

@@ -1,6 +1,6 @@
 package com.gravatar.quickeditor.ui.alttext
 
-import com.gravatar.quickeditor.ui.avatarpicker.AltTextSectionUiState
+import com.gravatar.quickeditor.ui.avatarpicker.AltTextPageUiState
 import com.gravatar.quickeditor.ui.gravatarScreenshotTest
 import com.gravatar.restapi.models.Avatar
 import com.gravatar.ui.GravatarTheme
@@ -9,12 +9,12 @@ import org.junit.Test
 import org.robolectric.annotation.Config
 import java.net.URI
 
-class AltTextSectionTest : RoborazziTest() {
+class AltTextPageTest : RoborazziTest() {
     @Test
-    fun altTextSectionLoaded() = gravatarScreenshotTest {
+    fun altTextPageLoaded() = gravatarScreenshotTest {
         GravatarTheme {
-            AltTextSection(
-                altTextState = AltTextSectionUiState(
+            AltTextPage(
+                altTextState = AltTextPageUiState(
                     avatar = Avatar {
                         imageUrl = URI.create("https://gravatar.com/avatar/test")
                         imageId = "1"
@@ -33,10 +33,10 @@ class AltTextSectionTest : RoborazziTest() {
 
     @Config(qualifiers = "+night")
     @Test
-    fun altTextSectionLoadedDark() = gravatarScreenshotTest {
+    fun altTextPageLoadedDark() = gravatarScreenshotTest {
         GravatarTheme {
-            AltTextSection(
-                altTextState = AltTextSectionUiState(
+            AltTextPage(
+                altTextState = AltTextPageUiState(
                     avatar = Avatar {
                         imageUrl = URI.create("https://gravatar.com/avatar/test")
                         imageId = "1"
@@ -54,10 +54,10 @@ class AltTextSectionTest : RoborazziTest() {
     }
 
     @Test
-    fun emptyAltTextSectionLoaded() = gravatarScreenshotTest {
+    fun emptyAltTextPageLoaded() = gravatarScreenshotTest {
         GravatarTheme {
-            AltTextSection(
-                altTextState = AltTextSectionUiState(
+            AltTextPage(
+                altTextState = AltTextPageUiState(
                     avatar = Avatar {
                         imageUrl = URI.create("https://gravatar.com/avatar/test")
                         imageId = "1"
@@ -76,10 +76,10 @@ class AltTextSectionTest : RoborazziTest() {
 
     @Config(qualifiers = "+night")
     @Test
-    fun emptyAltTextSectionLoadedDark() = gravatarScreenshotTest {
+    fun emptyAltTextPageLoadedDark() = gravatarScreenshotTest {
         GravatarTheme {
-            AltTextSection(
-                altTextState = AltTextSectionUiState(
+            AltTextPage(
+                altTextState = AltTextPageUiState(
                     avatar = Avatar {
                         imageUrl = URI.create("https://gravatar.com/avatar/test")
                         imageId = "1"

@@ -479,7 +479,7 @@ internal class AvatarPickerViewModel(
     }
 
     private fun updateAltText() {
-        _uiState.value.altTextSectionUiState?.let { altTextState ->
+        _uiState.value.altTextPageUiState?.let { altTextState ->
             updateAvatar(
                 avatarId = altTextState.avatar.imageId,
                 altText = altTextState.altText,

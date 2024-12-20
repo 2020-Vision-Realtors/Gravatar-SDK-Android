@@ -14,7 +14,7 @@ import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navOptions
 import com.gravatar.quickeditor.QuickEditorContainer
-import com.gravatar.quickeditor.ui.alttext.AltTextSection
+import com.gravatar.quickeditor.ui.alttext.AltTextPage
 import com.gravatar.quickeditor.ui.avatarpicker.AvatarPicker
 import com.gravatar.quickeditor.ui.avatarpicker.AvatarPickerViewModel
 import com.gravatar.quickeditor.ui.avatarpicker.AvatarPickerViewModelFactory
@@ -95,7 +95,7 @@ internal fun GravatarQuickEditorPage(
             composable(
                 route = EditorNavDestinations.ALT_TEXT.name,
             ) {
-                AltTextSection(
+                AltTextPage(
                     onBackPressed = { navController.popBackStack() },
                     viewModel = editorViewModel,
                     modifier = Modifier.padding(16.dp),
@@ -173,7 +173,7 @@ internal fun GravatarQuickEditorPage(
             composable(
                 route = EditorNavDestinations.ALT_TEXT.name,
             ) {
-                AltTextSection(
+                AltTextPage(
                     onBackPressed = { navController.popBackStack() },
                     viewModel = editorViewModel,
                     modifier = Modifier.padding(16.dp),

@@ -37,9 +37,9 @@ internal data class AvatarPickerUiState(
         )
     }
 
-    val altTextSectionUiState: AltTextSectionUiState? =
+    val altTextPageUiState: AltTextPageUiState? =
         emailAvatars?.avatars?.firstOrNull { it.imageId == altTextAvatarId }?.let {
-            AltTextSectionUiState(
+            AltTextPageUiState(
                 avatar = it,
                 isUpdating = updatingAltText,
                 altText = newAltText ?: it.altText,
@@ -95,7 +95,7 @@ internal data class AvatarsSectionUiState(
     val uploadButtonEnabled: Boolean,
 )
 
-internal data class AltTextSectionUiState(
+internal data class AltTextPageUiState(
     val avatar: Avatar,
     val isSaveButtonEnabled: Boolean,
     val isUpdating: Boolean,
