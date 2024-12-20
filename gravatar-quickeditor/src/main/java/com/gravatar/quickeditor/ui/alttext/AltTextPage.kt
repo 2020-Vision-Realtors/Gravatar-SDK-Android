@@ -154,7 +154,7 @@ internal fun AltTextPage(
                             id = R.string.gravatar_qe_selectable_avatar_content_description,
                         ),
                         modifier = Modifier
-                            .size(96.dp)
+                            .size(avatarSize)
                             .border(
                                 1.dp,
                                 MaterialTheme.colorScheme.surfaceDim,
