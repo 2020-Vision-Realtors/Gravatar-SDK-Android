@@ -8,6 +8,8 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavGraphBuilder
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
@@ -73,35 +75,12 @@ internal fun GravatarQuickEditorPage(
                 onAuthSuccess = { navController.navigate(QuickEditorPage.EDITOR.name) },
             )
         }
-        navigation(
-            route = QuickEditorPage.EDITOR.name,
-            startDestination = EditorNavDestinations.AVATAR_SELECTION.name,
-        ) {
-            composable(route = EditorNavDestinations.AVATAR_SELECTION.name) {
-                AvatarPicker(
-                    onAvatarSelected = onAvatarSelected,
-                    onSessionExpired = { navController.navigate(QuickEditorPage.OAUTH.name) },
-                    onAltTextTapped = {
-                        navController.navigate(
-                            route = EditorNavDestinations.ALT_TEXT.name,
-                            navOptions = navOptions {
-                                popUpTo(EditorNavDestinations.AVATAR_SELECTION.name) { saveState = true }
-                            },
-                        )
-                    },
-                    viewModel = editorViewModel,
-                )
-            }
-            composable(
-                route = EditorNavDestinations.ALT_TEXT.name,
-            ) {
-                AltTextPage(
-                    onBackPressed = { navController.popBackStack() },
-                    viewModel = editorViewModel,
-                    modifier = Modifier.padding(16.dp),
-                )
-            }
-        }
+        addAvatarPickerGraph(
+            navController = navController,
+            onAvatarSelected = onAvatarSelected,
+            onSessionExpired = { navController.navigate(QuickEditorPage.OAUTH.name) },
+            editorViewModel = editorViewModel,
+        )
     }
 }
 
@@ -151,34 +130,48 @@ internal fun GravatarQuickEditorPage(
                 navController.navigate(QuickEditorPage.EDITOR.name)
             }
         }
-        navigation(
-            route = QuickEditorPage.EDITOR.name,
-            startDestination = EditorNavDestinations.AVATAR_SELECTION.name,
+        addAvatarPickerGraph(
+            navController = navController,
+            onAvatarSelected = onAvatarSelected,
+            onSessionExpired = { onDismiss(GravatarQuickEditorDismissReason.InvalidToken) },
+            editorViewModel = editorViewModel,
+        )
+    }
+}
+
+private fun NavGraphBuilder.addAvatarPickerGraph(
+    navController: NavHostController,
+    onAvatarSelected: () -> Unit,
+    onSessionExpired: () -> Unit,
+    editorViewModel: AvatarPickerViewModel,
+) {
+    navigation(
+        route = QuickEditorPage.EDITOR.name,
+        startDestination = EditorNavDestinations.AVATAR_SELECTION.name,
+    ) {
+        composable(route = EditorNavDestinations.AVATAR_SELECTION.name) {
+            AvatarPicker(
+                onAvatarSelected = onAvatarSelected,
+                onSessionExpired = onSessionExpired,
+                onAltTextTapped = {
+                    navController.navigate(
+                        route = EditorNavDestinations.ALT_TEXT.name,
+                        navOptions = navOptions {
+                            popUpTo(EditorNavDestinations.AVATAR_SELECTION.name) { saveState = true }
+                        },
+                    )
+                },
+                viewModel = editorViewModel,
+            )
+        }
+        composable(
+            route = EditorNavDestinations.ALT_TEXT.name,
         ) {
-            composable(route = EditorNavDestinations.AVATAR_SELECTION.name) {
-                AvatarPicker(
-                    onAvatarSelected = onAvatarSelected,
-                    onSessionExpired = { onDismiss(GravatarQuickEditorDismissReason.InvalidToken) },
-                    onAltTextTapped = {
-                        navController.navigate(
-                            route = EditorNavDestinations.ALT_TEXT.name,
-                            navOptions = navOptions {
-                                popUpTo(EditorNavDestinations.AVATAR_SELECTION.name) { saveState = true }
-                            },
-                        )
-                    },
-                    viewModel = editorViewModel,
-                )
-            }
-            composable(
-                route = EditorNavDestinations.ALT_TEXT.name,
-            ) {
-                AltTextPage(
-                    onBackPressed = { navController.popBackStack() },
-                    viewModel = editorViewModel,
-                    modifier = Modifier.padding(16.dp),
-                )
-            }
+            AltTextPage(
+                onBackPressed = { navController.popBackStack() },
+                viewModel = editorViewModel,
+                modifier = Modifier.padding(16.dp),
+            )
         }
     }
 }
