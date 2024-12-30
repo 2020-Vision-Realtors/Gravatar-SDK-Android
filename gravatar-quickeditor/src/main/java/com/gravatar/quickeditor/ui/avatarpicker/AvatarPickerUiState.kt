@@ -37,16 +37,6 @@ internal data class AvatarPickerUiState(
         )
     }
 
-    val altTextPageUiState: AltTextPageUiState? =
-        emailAvatars?.avatars?.firstOrNull { it.imageId == altTextAvatarId }?.let {
-            AltTextPageUiState(
-                avatar = it,
-                isUpdating = updatingAltText,
-                altText = newAltText ?: it.altText,
-                isSaveButtonEnabled = newAltText != null && newAltText != it.altText && !updatingAltText,
-            )
-        }
-
     private fun EmailAvatars.mapToUiModel(): List<AvatarUi> {
         return mutableListOf<AvatarUi>().apply {
             uploadingAvatar?.let {
@@ -93,13 +83,6 @@ internal data class AvatarsSectionUiState(
     val avatars: List<AvatarUi>,
     val scrollToIndex: Int?,
     val uploadButtonEnabled: Boolean,
-)
-
-internal data class AltTextPageUiState(
-    val avatar: Avatar,
-    val isSaveButtonEnabled: Boolean,
-    val isUpdating: Boolean,
-    val altText: String,
 )
 
 internal data class AvatarUploadFailure(

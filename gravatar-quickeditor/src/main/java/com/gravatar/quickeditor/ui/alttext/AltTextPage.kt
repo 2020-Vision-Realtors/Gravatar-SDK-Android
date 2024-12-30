@@ -34,29 +34,32 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.gravatar.quickeditor.R
-import com.gravatar.quickeditor.ui.avatarpicker.AltTextPageUiState
-import com.gravatar.quickeditor.ui.avatarpicker.AvatarPickerAction
-import com.gravatar.quickeditor.ui.avatarpicker.AvatarPickerEvent
-import com.gravatar.quickeditor.ui.avatarpicker.AvatarPickerViewModel
-import com.gravatar.quickeditor.ui.avatarpicker.AvatarUpdateType
-import com.gravatar.quickeditor.ui.avatarpicker.errorStringRes
 import com.gravatar.quickeditor.ui.components.QEButton
 import com.gravatar.quickeditor.ui.components.QESectionTitle
 import com.gravatar.quickeditor.ui.extensions.QESnackbarHost
 import com.gravatar.quickeditor.ui.extensions.SnackbarType
 import com.gravatar.quickeditor.ui.extensions.showQESnackbar
-import com.gravatar.restapi.models.Avatar
 import com.gravatar.ui.GravatarTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import java.net.URI
 import java.net.URL
 
 @Composable
-internal fun AltTextPage(onBackPressed: () -> Unit, viewModel: AvatarPickerViewModel, modifier: Modifier = Modifier) {
+internal fun AltTextPage(
+    email: String,
+    avatarId: String,
+    altText: String,
+    avatarUrl: String,
+    onBackPressed: () -> Unit,
+    modifier: Modifier = Modifier,
+    viewModel: AltTextViewModel = viewModel(
+        factory = AltTextViewModelFactory(email, avatarId, altText, avatarUrl),
+    ),
+) {
     BackHandler {
         onBackPressed()
     }
@@ -71,15 +74,17 @@ internal fun AltTextPage(onBackPressed: () -> Unit, viewModel: AvatarPickerViewM
         withContext(Dispatchers.Main.immediate) {
             lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.actions.collect { action ->
-                    when {
-                        action is AvatarPickerAction.AvatarUpdated && action.type == AvatarUpdateType.ALT_TEXT -> {
+                    when (action) {
+                        is AltTextAction.AltTextUpdated -> {
                             onBackPressed()
                         }
 
-                        action is AvatarPickerAction.AvatarUpdateFailed && action.type == AvatarUpdateType.ALT_TEXT -> {
+                        is AltTextAction.AltTextUpdateFailed -> {
                             scope.launch {
                                 snackState.showQESnackbar(
-                                    message = context.getString(action.type.errorStringRes),
+                                    message = context.getString(
+                                        R.string.gravatar_qe_avatar_picker_alt_text_update_error,
+                                    ),
                                     snackbarType = SnackbarType.Error,
                                 )
                             }
@@ -92,7 +97,7 @@ internal fun AltTextPage(onBackPressed: () -> Unit, viewModel: AvatarPickerViewM
 
     GravatarTheme {
         Box(modifier = modifier.wrapContentSize()) {
-            state.altTextPageUiState?.let { altTextState ->
+            state.let { altTextState ->
                 AltTextPage(
                     altTextState = altTextState,
                     onEvent = viewModel::onEvent,
@@ -109,8 +114,8 @@ internal fun AltTextPage(onBackPressed: () -> Unit, viewModel: AvatarPickerViewM
 
 @Composable
 internal fun AltTextPage(
-    altTextState: AltTextPageUiState,
-    onEvent: (AvatarPickerEvent) -> Unit,
+    altTextState: AltTextUiState,
+    onEvent: (AltTextEvent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Surface(modifier = modifier.fillMaxWidth()) {
@@ -149,7 +154,7 @@ internal fun AltTextPage(
                     val avatarSize = 96.dp
                     val sizePx = with(LocalDensity.current) { avatarSize.roundToPx() }
                     AsyncImage(
-                        model = altTextState.avatar.imageUrlWithSize(sizePx),
+                        model = altTextState.imageUrlWithSize(sizePx),
                         contentDescription = stringResource(
                             id = R.string.gravatar_qe_selectable_avatar_content_description,
                         ),
@@ -164,8 +169,8 @@ internal fun AltTextPage(
                     )
                     BasicTextField(
                         value = altTextState.altText,
-                        onValueChange = {
-                            onEvent(AvatarPickerEvent.AvatarAltTextChange(it))
+                        onValueChange = { newAltText ->
+                            onEvent(AltTextEvent.AvatarAltTextChange(newAltText))
                         },
                         textStyle = LocalTextStyle.current.copy(color = MaterialTheme.colorScheme.onSurface),
                         modifier = Modifier
@@ -175,7 +180,7 @@ internal fun AltTextPage(
                 }
                 QEButton(
                     buttonText = stringResource(R.string.gravatar_qe_avatar_alt_text_save_button),
-                    onClick = { onEvent(AvatarPickerEvent.AvatarAltTextSaveTapped) },
+                    onClick = { onEvent(AltTextEvent.AvatarAltTextSaveTapped) },
                     modifier = Modifier.padding(top = 16.dp),
                     enabled = altTextState.isSaveButtonEnabled,
                     loading = altTextState.isUpdating,
@@ -185,7 +190,7 @@ internal fun AltTextPage(
     }
 }
 
-private fun Avatar.imageUrlWithSize(sizePx: Int) = imageUrl.toURL()?.let { url ->
+private fun AltTextUiState.imageUrlWithSize(sizePx: Int) = URL(avatarUrl).let { url ->
     URL(url.protocol, url.host, url.path.plus("?size=$sizePx"))
 }.toString()
 
@@ -194,14 +199,8 @@ private fun Avatar.imageUrlWithSize(sizePx: Int) = imageUrl.toURL()?.let { url -
 private fun AltTextPagePreview() {
     GravatarTheme {
         AltTextPage(
-            altTextState = AltTextPageUiState(
-                avatar = Avatar {
-                    imageUrl = URI.create("https://gravatar.com/avatar/test")
-                    imageId = "1"
-                    rating = Avatar.Rating.G
-                    altText = "alt"
-                    updatedDate = ""
-                },
+            altTextState = AltTextUiState(
+                avatarUrl = "https://gravatar.com/avatar/test",
                 isUpdating = false,
                 altText = "alt",
                 isSaveButtonEnabled = true,
@@ -216,14 +215,8 @@ private fun AltTextPagePreview() {
 private fun AltTextPageEmptyAltTextPreview() {
     GravatarTheme {
         AltTextPage(
-            altTextState = AltTextPageUiState(
-                avatar = Avatar {
-                    imageUrl = URI.create("https://gravatar.com/avatar/test")
-                    imageId = "1"
-                    rating = Avatar.Rating.G
-                    altText = ""
-                    updatedDate = ""
-                },
+            altTextState = AltTextUiState(
+                avatarUrl = "https://gravatar.com/avatar/test",
                 isUpdating = false,
                 altText = "",
                 isSaveButtonEnabled = true,

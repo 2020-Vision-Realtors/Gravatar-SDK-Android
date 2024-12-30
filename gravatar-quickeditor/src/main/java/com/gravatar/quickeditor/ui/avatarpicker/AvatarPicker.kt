@@ -48,6 +48,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.gravatar.extensions.defaultProfile
 import com.gravatar.quickeditor.R
 import com.gravatar.quickeditor.data.repository.EmailAvatars
@@ -64,6 +65,7 @@ import com.gravatar.quickeditor.ui.components.ProfileCard
 import com.gravatar.quickeditor.ui.cropperlauncher.CropperLauncher
 import com.gravatar.quickeditor.ui.cropperlauncher.UCropCropperLauncher
 import com.gravatar.quickeditor.ui.editor.AvatarPickerContentLayout
+import com.gravatar.quickeditor.ui.editor.GravatarQuickEditorParams
 import com.gravatar.quickeditor.ui.editor.bottomsheet.DEFAULT_PAGE_HEIGHT
 import com.gravatar.quickeditor.ui.extensions.QESnackbarHost
 import com.gravatar.quickeditor.ui.extensions.QESnackbarResult
@@ -84,10 +86,14 @@ import java.net.URI
 
 @Composable
 internal fun AvatarPicker(
+    gravatarQuickEditorParams: GravatarQuickEditorParams,
+    handleExpiredSession: Boolean,
     onAvatarSelected: () -> Unit,
     onSessionExpired: () -> Unit,
-    onAltTextTapped: () -> Unit,
-    viewModel: AvatarPickerViewModel,
+    onAltTextTapped: (email: String, avatarId: String, altText: String, avatarUrl: String) -> Unit,
+    viewModel: AvatarPickerViewModel = viewModel(
+        factory = AvatarPickerViewModelFactory(gravatarQuickEditorParams, handleExpiredSession),
+    ),
     cropperLauncher: CropperLauncher = UCropCropperLauncher(),
 ) {
     val snackState = remember { SnackbarHostState() }
@@ -329,7 +335,7 @@ private fun AvatarPickerAction.handle(
     cropperLauncher: CropperLauncher,
     onAvatarSelected: () -> Unit,
     onSessionExpired: () -> Unit,
-    onAltTextTapped: () -> Unit,
+    onAltTextTapped: (email: String, avatarId: String, altText: String, avatarUrl: String) -> Unit,
     snackState: SnackbarHostState,
     context: Context,
     uCropLauncher: ManagedActivityResultLauncher<Intent, ActivityResult>,
@@ -417,7 +423,12 @@ private fun AvatarPickerAction.handle(
             }
         }
 
-        is AvatarPickerAction.LaunchAvatarAltText -> onAltTextTapped()
+        is AvatarPickerAction.LaunchAvatarAltText -> onAltTextTapped(
+            email.toString(),
+            avatar.imageId,
+            avatar.altText,
+            avatar.imageUrl.toString(),
+        )
     }
 }
 

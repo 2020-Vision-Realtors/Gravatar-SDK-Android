@@ -74,8 +74,6 @@ internal class AvatarPickerViewModel(
             AvatarPickerEvent.AvatarDeleteAlertDismissed -> hideNonSelectedAvatarAlert()
             is AvatarPickerEvent.AvatarRatingSelected -> updateAvatar(event.avatarId, event.rating)
             is AvatarPickerEvent.AvatarAltTextTapped -> launchAltTextEditor(event.avatarId)
-            is AvatarPickerEvent.AvatarAltTextSaveTapped -> updateAltText()
-            is AvatarPickerEvent.AvatarAltTextChange -> updateUiStateWithNewAltText(event.newAltText)
         }
     }
 
@@ -455,35 +453,16 @@ internal class AvatarPickerViewModel(
             .launchIn(viewModelScope)
     }
 
-    private fun updateUiStateWithNewAltText(newAltText: String) {
-        viewModelScope.launch {
-            _uiState.update { currentState ->
-                currentState.copy(
-                    newAltText = newAltText,
-                )
-            }
-        }
-    }
-
     private fun launchAltTextEditor(avatarId: String) {
         viewModelScope.launch {
-            _uiState.value.emailAvatars?.avatars?.firstOrNull { it.imageId == avatarId }?.let {
-                _actions.send(AvatarPickerAction.LaunchAvatarAltText)
+            _uiState.value.emailAvatars?.avatars?.firstOrNull { it.imageId == avatarId }?.let { avatar ->
+                _actions.send(AvatarPickerAction.LaunchAvatarAltText(email, avatar))
             }
             _uiState.update { currentState ->
                 currentState.copy(
                     altTextAvatarId = avatarId,
                 )
             }
-        }
-    }
-
-    private fun updateAltText() {
-        _uiState.value.altTextPageUiState?.let { altTextState ->
-            updateAvatar(
-                avatarId = altTextState.avatar.imageId,
-                altText = altTextState.altText,
-            )
         }
     }
 

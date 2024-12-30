@@ -7,24 +7,25 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import androidx.navigation.navOptions
 import com.gravatar.quickeditor.QuickEditorContainer
 import com.gravatar.quickeditor.ui.alttext.AltTextPage
 import com.gravatar.quickeditor.ui.avatarpicker.AvatarPicker
-import com.gravatar.quickeditor.ui.avatarpicker.AvatarPickerViewModel
-import com.gravatar.quickeditor.ui.avatarpicker.AvatarPickerViewModelFactory
 import com.gravatar.quickeditor.ui.navigation.EditorNavDestinations
 import com.gravatar.quickeditor.ui.navigation.QuickEditorPage
 import com.gravatar.quickeditor.ui.oauth.OAuthPage
 import com.gravatar.quickeditor.ui.oauth.OAuthParams
 import com.gravatar.quickeditor.ui.splash.SplashPage
+import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
 
 /**
  * Raw composable component for the Quick Editor.
@@ -45,12 +46,6 @@ internal fun GravatarQuickEditorPage(
     onDismiss: (dismissReason: GravatarQuickEditorDismissReason) -> Unit = {},
 ) {
     val navController = rememberNavController()
-    val editorViewModel: AvatarPickerViewModel = viewModel(
-        factory = AvatarPickerViewModelFactory(
-            gravatarQuickEditorParams = gravatarQuickEditorParams,
-            handleExpiredSession = true,
-        ),
-    )
 
     NavHost(
         navController,
@@ -76,10 +71,11 @@ internal fun GravatarQuickEditorPage(
             )
         }
         addAvatarPickerGraph(
+            gravatarQuickEditorParams = gravatarQuickEditorParams,
+            handleExpiredSession = true,
             navController = navController,
             onAvatarSelected = onAvatarSelected,
             onSessionExpired = { navController.navigate(QuickEditorPage.OAUTH.name) },
-            editorViewModel = editorViewModel,
         )
     }
 }
@@ -104,10 +100,6 @@ internal fun GravatarQuickEditorPage(
 ) {
     val navController = rememberNavController()
 
-    val editorViewModel: AvatarPickerViewModel = viewModel(
-        factory = AvatarPickerViewModelFactory(gravatarQuickEditorParams, false),
-    )
-
     DisposableEffect(authToken) {
         QuickEditorContainer.getInstance().useInMemoryTokenStorage()
 
@@ -131,19 +123,21 @@ internal fun GravatarQuickEditorPage(
             }
         }
         addAvatarPickerGraph(
+            gravatarQuickEditorParams = gravatarQuickEditorParams,
+            handleExpiredSession = false,
             navController = navController,
             onAvatarSelected = onAvatarSelected,
             onSessionExpired = { onDismiss(GravatarQuickEditorDismissReason.InvalidToken) },
-            editorViewModel = editorViewModel,
         )
     }
 }
 
 private fun NavGraphBuilder.addAvatarPickerGraph(
     navController: NavHostController,
+    gravatarQuickEditorParams: GravatarQuickEditorParams,
+    handleExpiredSession: Boolean,
     onAvatarSelected: () -> Unit,
     onSessionExpired: () -> Unit,
-    editorViewModel: AvatarPickerViewModel,
 ) {
     navigation(
         route = QuickEditorPage.EDITOR.name,
@@ -151,25 +145,40 @@ private fun NavGraphBuilder.addAvatarPickerGraph(
     ) {
         composable(route = EditorNavDestinations.AVATAR_SELECTION.name) {
             AvatarPicker(
+                gravatarQuickEditorParams = gravatarQuickEditorParams,
+                handleExpiredSession = handleExpiredSession,
                 onAvatarSelected = onAvatarSelected,
                 onSessionExpired = onSessionExpired,
-                onAltTextTapped = {
+                onAltTextTapped = { email, avatarId, altText, avatarUrl ->
+                    val encodedUrl = URLEncoder.encode(avatarUrl, StandardCharsets.UTF_8.toString())
                     navController.navigate(
-                        route = EditorNavDestinations.ALT_TEXT.name,
+                        route = "${EditorNavDestinations.ALT_TEXT.name}/$email/$avatarId/$altText/$encodedUrl",
                         navOptions = navOptions {
                             popUpTo(EditorNavDestinations.AVATAR_SELECTION.name) { saveState = true }
                         },
                     )
                 },
-                viewModel = editorViewModel,
             )
         }
         composable(
-            route = EditorNavDestinations.ALT_TEXT.name,
+            route = "${EditorNavDestinations.ALT_TEXT.name}/{email}/{avatarId}/{altText}/{avatarUrl}",
+            arguments = listOf(
+                navArgument("email") { type = NavType.StringType },
+                navArgument("avatarId") { type = NavType.StringType },
+                navArgument("altText") { type = NavType.StringType },
+                navArgument("avatarUrl") { type = NavType.StringType },
+            ),
         ) {
+            val email = requireNotNull(it.arguments?.getString("email"))
+            val avatarId = requireNotNull(it.arguments?.getString("avatarId"))
+            val altText = requireNotNull(it.arguments?.getString("altText"))
+            val avatarUrl = requireNotNull(it.arguments?.getString("avatarUrl"))
             AltTextPage(
+                email = email,
+                avatarId = avatarId,
+                altText = altText,
+                avatarUrl = avatarUrl,
                 onBackPressed = { navController.popBackStack() },
-                viewModel = editorViewModel,
                 modifier = Modifier.padding(16.dp),
             )
         }

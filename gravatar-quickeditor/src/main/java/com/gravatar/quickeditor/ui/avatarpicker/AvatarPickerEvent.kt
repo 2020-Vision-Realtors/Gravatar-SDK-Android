@@ -31,8 +31,4 @@ internal sealed class AvatarPickerEvent {
     data class AvatarRatingSelected(val avatarId: String, val rating: Avatar.Rating) : AvatarPickerEvent()
 
     data class AvatarAltTextTapped(val avatarId: String) : AvatarPickerEvent()
-
-    data class AvatarAltTextChange(val newAltText: String) : AvatarPickerEvent()
-
-    data object AvatarAltTextSaveTapped : AvatarPickerEvent()
 }
