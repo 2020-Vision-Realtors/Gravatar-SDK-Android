@@ -72,23 +72,22 @@ internal class AvatarPickerViewModel(
             AvatarPickerEvent.DownloadManagerDisabledDialogDismissed -> hideDownloadManagerAlert()
             is AvatarPickerEvent.AvatarDeleteSelected -> deleteAvatar(event.avatarId)
             AvatarPickerEvent.AvatarDeleteAlertDismissed -> hideNonSelectedAvatarAlert()
-            is AvatarPickerEvent.AvatarRatingSelected -> updateAvatar(event.avatarId, event.rating)
+            is AvatarPickerEvent.AvatarRatingSelected -> updateAvatarRating(event.avatarId, event.rating)
             is AvatarPickerEvent.AvatarAltTextTapped -> launchAltTextEditor(event.avatarId)
         }
     }
 
-    private fun updateAvatar(avatarId: String, rating: Avatar.Rating? = null, altText: String? = null) {
+    private fun updateAvatarRating(avatarId: String, rating: Avatar.Rating? = null) {
         viewModelScope.launch {
             val oldAvatar: Avatar? = _uiState.value.emailAvatars?.avatars?.find { it.imageId == avatarId }
-            if (!oldAvatar.shouldUpdateRating(rating) && !oldAvatar.shouldUpdateAltText(altText)) {
+            if (!oldAvatar.shouldUpdateRating(rating)) {
                 return@launch
             }
-            val updateType = if (rating != null) AvatarUpdateType.RATING else AvatarUpdateType.ALT_TEXT
             _uiState.update { currentState ->
                 val emailAvatars = currentState.emailAvatars?.copy(
                     avatars = currentState.emailAvatars.avatars.map { avatar ->
                         if (avatar.imageId == avatarId) {
-                            avatar.copy(rating, altText)
+                            avatar.copy(rating)
                         } else {
                             avatar
                         }
@@ -96,19 +95,11 @@ internal class AvatarPickerViewModel(
                 )
                 currentState.copy(
                     emailAvatars = emailAvatars,
-                    updatingAltText = updateType == AvatarUpdateType.ALT_TEXT,
                 )
             }
-            when (avatarRepository.updateAvatar(email, avatarId, rating, altText)) {
+            when (avatarRepository.updateAvatar(email = email, avatarId = avatarId, rating = rating)) {
                 is GravatarResult.Success -> {
-                    _actions.send(AvatarPickerAction.AvatarUpdated(updateType))
-                    _uiState.update { currentState ->
-                        currentState.copy(
-                            altTextAvatarId = null,
-                            updatingAltText = false,
-                            newAltText = null,
-                        )
-                    }
+                    _actions.send(AvatarPickerAction.AvatarRatingUpdated)
                 }
 
                 is GravatarResult.Failure -> {
@@ -116,7 +107,7 @@ internal class AvatarPickerViewModel(
                         val emailAvatars = currentState.emailAvatars?.copy(
                             avatars = currentState.emailAvatars.avatars.map { avatar ->
                                 if (avatar.imageId == avatarId) {
-                                    avatar.copy(oldAvatar?.rating, oldAvatar?.altText)
+                                    avatar.copy(oldAvatar?.rating)
                                 } else {
                                     avatar
                                 }
@@ -124,10 +115,9 @@ internal class AvatarPickerViewModel(
                         )
                         currentState.copy(
                             emailAvatars = emailAvatars,
-                            updatingAltText = false,
                         )
                     }
-                    _actions.send(AvatarPickerAction.AvatarUpdateFailed(updateType))
+                    _actions.send(AvatarPickerAction.AvatarRatingUpdateFailed)
                 }
             }
         }
@@ -458,11 +448,6 @@ internal class AvatarPickerViewModel(
             _uiState.value.emailAvatars?.avatars?.firstOrNull { it.imageId == avatarId }?.let { avatar ->
                 _actions.send(AvatarPickerAction.LaunchAvatarAltText(email, avatar))
             }
-            _uiState.update { currentState ->
-                currentState.copy(
-                    altTextAvatarId = avatarId,
-                )
-            }
         }
     }
 
@@ -480,10 +465,6 @@ internal class AvatarPickerViewModel(
 
     private fun Avatar?.shouldUpdateRating(newRating: Avatar.Rating?): Boolean {
         return newRating != null && this?.rating != newRating
-    }
-
-    private fun Avatar?.shouldUpdateAltText(newAltText: String?): Boolean {
-        return newAltText != null && this?.altText != newAltText
     }
 }
 
@@ -510,13 +491,13 @@ private inline fun <T> List<T>.indexOfFirstOrNull(predicate: (T) -> Boolean): In
     return if (index == -1) null else index
 }
 
-internal fun Avatar.copy(rating: Avatar.Rating? = null, altText: String? = null): Avatar {
+internal fun Avatar.copy(rating: Avatar.Rating? = null): Avatar {
     return Avatar {
         imageId = this@copy.imageId
         imageUrl = this@copy.imageUrl
         updatedDate = this@copy.updatedDate
         selected = this@copy.selected
-        this.altText = altText ?: this@copy.altText
+        this.altText = this@copy.altText
         this.rating = rating ?: this@copy.rating
     }
 }

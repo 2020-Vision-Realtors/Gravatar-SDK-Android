@@ -403,20 +403,20 @@ private fun AvatarPickerAction.handle(
             }
         }
 
-        is AvatarPickerAction.AvatarUpdateFailed -> {
+        is AvatarPickerAction.AvatarRatingUpdateFailed -> {
             scope.launch {
                 snackState.showQESnackbar(
-                    message = context.getString(this@handle.type.errorStringRes),
+                    message = context.getString(R.string.gravatar_qe_avatar_picker_rating_update_error),
                     withDismissAction = true,
                     snackbarType = SnackbarType.Error,
                 )
             }
         }
 
-        is AvatarPickerAction.AvatarUpdated -> {
+        is AvatarPickerAction.AvatarRatingUpdated -> {
             scope.launch {
                 snackState.showQESnackbar(
-                    message = context.getString(this@handle.type.successStringRes),
+                    message = context.getString(R.string.gravatar_qe_avatar_picker_rating_update_success),
                     withDismissAction = true,
                     snackbarType = SnackbarType.Info,
                 )

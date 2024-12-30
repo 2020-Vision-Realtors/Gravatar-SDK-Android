@@ -1166,7 +1166,7 @@ class AvatarPickerViewModelTest {
             )
         }
         viewModel.actions.test {
-            assertEquals(AvatarPickerAction.AvatarUpdated(AvatarUpdateType.RATING), awaitItem())
+            assertEquals(AvatarPickerAction.AvatarRatingUpdated, awaitItem())
         }
     }
 
@@ -1214,7 +1214,7 @@ class AvatarPickerViewModelTest {
             )
         }
         viewModel.actions.test {
-            assertEquals(AvatarPickerAction.AvatarUpdateFailed(AvatarUpdateType.RATING), awaitItem())
+            assertEquals(AvatarPickerAction.AvatarRatingUpdateFailed, awaitItem())
         }
     }
 
@@ -1271,7 +1271,6 @@ class AvatarPickerViewModelTest {
                     profile = ComponentState.Loaded(profile),
                     avatarPickerContentLayout = avatarPickerContentLayout,
                     scrollToIndex = 0,
-                    altTextAvatarId = avatar.imageId,
                 ),
                 awaitItem(),
             )

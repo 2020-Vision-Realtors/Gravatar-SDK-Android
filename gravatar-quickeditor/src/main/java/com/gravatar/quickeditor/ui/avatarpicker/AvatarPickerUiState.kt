@@ -24,9 +24,6 @@ internal data class AvatarPickerUiState(
     val avatarUpdates: Int = 0,
     val downloadManagerDisabled: Boolean = false,
     val nonSelectedAvatarAlertVisible: Boolean = false,
-    private val altTextAvatarId: String? = null,
-    private val updatingAltText: Boolean = false,
-    private val newAltText: String? = null,
 ) {
     val avatarsSectionUiState: AvatarsSectionUiState? = emailAvatars?.mapToUiModel()?.let {
         AvatarsSectionUiState(
