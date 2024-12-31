@@ -220,9 +220,7 @@ class AvatarPickerViewModelTest {
             )
             assertEquals(
                 avatarPickerUiState.copy(
-                    emailAvatars = emailAvatarsCopy.copy(selectedAvatarId = avatars.last().imageId),
                     selectingAvatarId = null,
-                    scrollToIndex = 0,
                     avatarUpdates = 1,
                 ),
                 awaitItem(),

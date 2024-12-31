@@ -100,31 +100,53 @@ class AvatarRepositoryTest {
         val result = avatarRepository.selectAvatar(email, "avatarId")
 
         assertEquals(GravatarResult.Failure<String, QuickEditorError>(QuickEditorError.TokenNotFound), result)
+
+        avatarRepository.getAvatarsFlow(email).test {
+            expectNoEvents()
+        }
     }
 
     @Test
     fun `given token stored when avatar selected fails then Failure result`() = runTest {
+        val avatar = createAvatar("avatarId")
+        initAvatarsFlowForEmail(email, listOf(avatar))
         coEvery { tokenStorage.getToken(any()) } returns "token"
         coEvery {
             avatarService.setAvatarCatching(any(), any(), any())
         } returns GravatarResult.Failure(ErrorType.Unknown())
 
-        val result = avatarRepository.selectAvatar(email, "avatarId")
+        val result = avatarRepository.selectAvatar(email, avatar.imageId)
 
         assertEquals(
             GravatarResult.Failure<String, QuickEditorError>(QuickEditorError.Request(ErrorType.Unknown())),
             result,
         )
+
+        avatarRepository.getAvatarsFlow(email).test {
+            skipItems(1) // Initial state after getAvatars
+        }
     }
 
     @Test
     fun `given token stored when avatar selected succeeds then Success result`() = runTest {
+        val avatars = listOf(createAvatar("avatarId"), createAvatar("avatarId2", isSelected = true))
+        initAvatarsFlowForEmail(email, avatars)
         coEvery { tokenStorage.getToken(any()) } returns "token"
         coEvery { avatarService.setAvatarCatching(any(), any(), any()) } returns GravatarResult.Success(Unit)
 
         val result = avatarRepository.selectAvatar(email, "avatarId")
 
         assertEquals(GravatarResult.Success<Unit, QuickEditorError>(Unit), result)
+
+        avatarRepository.getAvatarsFlow(email).test {
+            assertEquals(
+                EmailAvatars(
+                    listOf(createAvatar("avatarId", isSelected = true), createAvatar("avatarId2", isSelected = false)),
+                    "avatarId",
+                ),
+                awaitItem(),
+            )
+        }
     }
 
     @Test

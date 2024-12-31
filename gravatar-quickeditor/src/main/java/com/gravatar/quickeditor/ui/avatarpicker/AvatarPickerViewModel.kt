@@ -192,9 +192,7 @@ internal class AvatarPickerViewModel(
                 when (avatarRepository.selectAvatar(email, avatarId)) {
                     is GravatarResult.Success -> {
                         _uiState.update { currentState ->
-                            val emailAvatars = currentState.emailAvatars?.copy(selectedAvatarId = avatarId)
                             currentState.copy(
-                                emailAvatars = emailAvatars,
                                 selectingAvatarId = null,
                                 avatarUpdates = currentState.avatarUpdates.inc(),
                             )
@@ -494,12 +492,12 @@ private inline fun <T> List<T>.indexOfFirstOrNull(predicate: (T) -> Boolean): In
     return if (index == -1) null else index
 }
 
-internal fun Avatar.copy(rating: Avatar.Rating? = null, altText: String? = null): Avatar {
+internal fun Avatar.copy(rating: Avatar.Rating? = null, altText: String? = null, selected: Boolean? = null): Avatar {
     return Avatar {
         imageId = this@copy.imageId
         imageUrl = this@copy.imageUrl
         updatedDate = this@copy.updatedDate
-        selected = this@copy.selected
+        this.selected = selected ?: this@copy.selected
         this.altText = altText ?: this@copy.altText
         this.rating = rating ?: this@copy.rating
     }
