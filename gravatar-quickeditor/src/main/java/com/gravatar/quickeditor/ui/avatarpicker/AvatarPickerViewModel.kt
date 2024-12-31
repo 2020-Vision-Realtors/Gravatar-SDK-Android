@@ -51,6 +51,7 @@ internal class AvatarPickerViewModel(
     init {
         refresh()
         nonAvatarSelectedAlertObserver()
+        avatarsObserver()
     }
 
     fun onEvent(event: AvatarPickerEvent) {
@@ -435,6 +436,16 @@ internal class AvatarPickerViewModel(
             .launchIn(viewModelScope)
     }
 
+    private fun avatarsObserver() {
+        viewModelScope.launch {
+            avatarRepository.getAvatarsFlow(email).collect { emailAvatars ->
+                _uiState.update {
+                    it.copy(emailAvatars = emailAvatars)
+                }
+            }
+        }
+    }
+
     private fun launchAltTextEditor(avatarId: String) {
         viewModelScope.launch {
             _uiState.value.emailAvatars?.avatars?.firstOrNull { it.imageId == avatarId }?.let { avatar ->
@@ -483,13 +494,13 @@ private inline fun <T> List<T>.indexOfFirstOrNull(predicate: (T) -> Boolean): In
     return if (index == -1) null else index
 }
 
-internal fun Avatar.copy(rating: Avatar.Rating? = null): Avatar {
+internal fun Avatar.copy(rating: Avatar.Rating? = null, altText: String? = null): Avatar {
     return Avatar {
         imageId = this@copy.imageId
         imageUrl = this@copy.imageUrl
         updatedDate = this@copy.updatedDate
         selected = this@copy.selected
-        this.altText = this@copy.altText
+        this.altText = altText ?: this@copy.altText
         this.rating = rating ?: this@copy.rating
     }
 }

@@ -25,6 +25,7 @@ import io.mockk.mockk
 import io.mockk.verify
 import junit.framework.TestCase.assertEquals
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
@@ -45,6 +46,7 @@ class AvatarPickerViewModelTest {
     private val avatarRepository = mockk<AvatarRepository>()
     private val fileUtils = mockk<FileUtils>()
     private val imageDownloader = mockk<ImageDownloader>()
+    private val avatarsFlow = MutableSharedFlow<EmailAvatars>(replay = 1)
 
     private lateinit var viewModel: AvatarPickerViewModel
 
@@ -67,6 +69,7 @@ class AvatarPickerViewModelTest {
     fun setup() {
         coEvery { profileService.retrieveCatching(email) } returns GravatarResult.Failure(ErrorType.Unknown())
         coEvery { avatarRepository.getAvatars(email) } returns GravatarResult.Success(emailAvatars)
+        coEvery { avatarRepository.getAvatarsFlow(email) } returns avatarsFlow
     }
 
     @Test

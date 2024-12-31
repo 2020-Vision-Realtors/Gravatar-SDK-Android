@@ -91,12 +91,13 @@ internal class QuickEditorContainer private constructor(
         FileUtils(context)
     }
 
-    val avatarRepository: AvatarRepository
-        get() = AvatarRepository(
+    val avatarRepository: AvatarRepository by lazy {
+        AvatarRepository(
             avatarService = avatarService,
             tokenStorage = tokenStorage,
             dispatcher = Dispatchers.IO,
         )
+    }
 
     val imageDownloader: ImageDownloader by lazy { ImageDownloader(context = context) }
 

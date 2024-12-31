@@ -9,6 +9,8 @@ import com.gravatar.services.AvatarService
 import com.gravatar.services.GravatarResult
 import com.gravatar.types.Email
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.withContext
 
 internal class AvatarRepository(
@@ -16,18 +18,26 @@ internal class AvatarRepository(
     private val tokenStorage: TokenStorage,
     private val dispatcher: CoroutineDispatcher,
 ) {
+    fun getAvatarsFlow(email: Email) = avatarsFlow(email).asSharedFlow()
+
+    private val avatarsFlows = mutableMapOf<String, MutableSharedFlow<EmailAvatars>>()
+
+    private fun avatarsFlow(email: Email): MutableSharedFlow<EmailAvatars> =
+        avatarsFlows.getOrPut(email.hash().toString()) { MutableSharedFlow(replay = 1) }
+
     suspend fun getAvatars(email: Email): GravatarResult<EmailAvatars, QuickEditorError> = withContext(dispatcher) {
         val token = tokenStorage.getToken(email.hash().toString())
         token?.let {
             when (val avatarsResult = avatarService.retrieveCatching(token, email.hash())) {
                 is GravatarResult.Success -> {
-                    val avatars = avatarsResult.value
-                    GravatarResult.Success(
+                    val emailAvatars = avatarsResult.value.let { avatars ->
                         EmailAvatars(
                             avatars,
                             avatars.firstOrNull { it.selected == true }?.imageId,
-                        ),
-                    )
+                        )
+                    }
+                    avatarsFlow(email).emit(emailAvatars)
+                    GravatarResult.Success(emailAvatars)
                 }
 
                 is GravatarResult.Failure -> {
@@ -84,10 +94,32 @@ internal class AvatarRepository(
         val token = tokenStorage.getToken(email.hash().toString())
         token?.let {
             when (val result = avatarService.updateAvatarCatching(avatarId, token, rating, altText)) {
-                is GravatarResult.Success -> GravatarResult.Success(result.value)
+                is GravatarResult.Success -> {
+                    updateAvatarFlow(email, result.value)
+                    GravatarResult.Success(result.value)
+                }
+
                 is GravatarResult.Failure -> GravatarResult.Failure(QuickEditorError.Request(result.error))
             }
         } ?: GravatarResult.Failure(QuickEditorError.TokenNotFound)
+    }
+
+    private suspend fun updateAvatarFlow(email: Email, avatarToUpdate: Avatar) {
+        avatarsFlow(email).let { avatarsFlow ->
+            val emailAvatars = avatarsFlow.replayCache.lastOrNull()?.let {
+                it.copy(
+                    avatars = it.avatars.map { avatar ->
+                        if (avatar.imageId == avatarToUpdate.imageId) {
+                            avatarToUpdate
+                        } else {
+                            avatar
+                        }
+                    },
+                )
+            }
+
+            emailAvatars?.let { avatarsFlow.emit(it) }
+        }
     }
 }
 

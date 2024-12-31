@@ -2,6 +2,7 @@ package com.gravatar.quickeditor.data.repository
 
 import android.net.Uri
 import androidx.core.net.toFile
+import app.cash.turbine.test
 import com.gravatar.quickeditor.data.models.QuickEditorError
 import com.gravatar.quickeditor.data.storage.DataStoreTokenStorage
 import com.gravatar.quickeditor.ui.CoroutineTestRule
@@ -66,6 +67,10 @@ class AvatarRepositoryTest {
             GravatarResult.Failure<EmailAvatars, QuickEditorError>(QuickEditorError.Request(ErrorType.Server)),
             result,
         )
+
+        avatarRepository.getAvatarsFlow(email).test {
+            expectNoEvents()
+        }
     }
 
     @Test
@@ -76,11 +81,16 @@ class AvatarRepositoryTest {
         coEvery { avatarService.retrieveCatching(any(), any()) } returns GravatarResult.Success(listOf(avatar))
 
         val result = avatarRepository.getAvatars(email)
+        val expectedEmailAvatars = EmailAvatars(listOf(avatar), imageId)
 
         assertEquals(
-            GravatarResult.Success<EmailAvatars, QuickEditorError>(EmailAvatars(listOf(avatar), imageId)),
+            GravatarResult.Success<EmailAvatars, QuickEditorError>(expectedEmailAvatars),
             result,
         )
+
+        avatarRepository.getAvatarsFlow(email).test {
+            assertEquals(expectedEmailAvatars, awaitItem())
+        }
     }
 
     @Test
@@ -209,10 +219,15 @@ class AvatarRepositoryTest {
         val result = avatarRepository.updateAvatar(email, "avatarId", Avatar.Rating.PG, "New Alt Text")
 
         assertEquals(GravatarResult.Failure<Unit, QuickEditorError>(QuickEditorError.TokenNotFound), result)
+
+        avatarRepository.getAvatarsFlow(email).test {
+            expectNoEvents()
+        }
     }
 
     @Test
     fun `given token stored when update avatar fails then Failure result`() = runTest {
+        initAvatarsFlowForEmail(email, listOf(createAvatar("avatarId")))
         coEvery { tokenStorage.getToken(any()) } returns "token"
         coEvery {
             avatarService.updateAvatarCatching(any(), any(), any(), any())
@@ -224,25 +239,57 @@ class AvatarRepositoryTest {
             GravatarResult.Failure<Unit, QuickEditorError>(QuickEditorError.Request(ErrorType.Server)),
             result,
         )
+
+        avatarRepository.getAvatarsFlow(email).test {
+            skipItems(1) // Initial state after getAvatars
+        }
     }
 
     @Test
     fun `given token stored when update avatar succeeds then Success result`() = runTest {
+        initAvatarsFlowForEmail(email, listOf(createAvatar("avatarId")))
+        val updatedAvatar = createAvatar(id = "avatarId", rating = Avatar.Rating.PG, altText = "New Alt Text")
         coEvery { tokenStorage.getToken(any()) } returns "token"
         coEvery {
-            avatarService.updateAvatarCatching(any(), any(), any(), any())
-        } returns GravatarResult.Success(createAvatar("1"))
+            avatarService.updateAvatarCatching(
+                avatarId = updatedAvatar.imageId,
+                oauthToken = "token",
+                avatarRating = updatedAvatar.rating,
+                altText = updatedAvatar.altText,
+            )
+        } returns GravatarResult.Success(updatedAvatar)
 
-        val result = avatarRepository.updateAvatar(email, "avatarId", Avatar.Rating.PG, "New Alt Text")
+        val result = avatarRepository.updateAvatar(
+            email,
+            updatedAvatar.imageId,
+            updatedAvatar.rating,
+            updatedAvatar.altText,
+        )
 
-        assertEquals(GravatarResult.Success<Avatar, QuickEditorError>(createAvatar("1")), result)
+        assertEquals(GravatarResult.Success<Avatar, QuickEditorError>(updatedAvatar), result)
+
+        avatarRepository.getAvatarsFlow(email).test {
+            assertEquals(EmailAvatars(listOf(updatedAvatar), null), awaitItem())
+        }
     }
 
-    private fun createAvatar(id: String, isSelected: Boolean = false) = Avatar {
+    private suspend fun initAvatarsFlowForEmail(email: Email, avatars: List<Avatar>) {
+        coEvery { tokenStorage.getToken(any()) } returns "token"
+        coEvery { avatarService.retrieveCatching(any(), any()) } returns GravatarResult.Success(avatars)
+
+        avatarRepository.getAvatars(email)
+    }
+
+    private fun createAvatar(
+        id: String,
+        isSelected: Boolean = false,
+        rating: Avatar.Rating = Avatar.Rating.G,
+        altText: String = "alt",
+    ) = Avatar {
         imageUrl = URI.create("https://gravatar.com/avatar/test")
         imageId = id
-        rating = Avatar.Rating.G
-        altText = "alt"
+        this.rating = rating
+        this.altText = altText
         updatedDate = ""
         selected = isSelected
     }
