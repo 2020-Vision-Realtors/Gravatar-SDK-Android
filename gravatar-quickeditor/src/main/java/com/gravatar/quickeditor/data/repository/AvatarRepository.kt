@@ -133,7 +133,25 @@ internal class AvatarRepository(
         val token = tokenStorage.getToken(email.hash().toString())
         token?.let {
             when (val result = avatarService.deleteAvatarCatching(avatarId, token)) {
-                is GravatarResult.Success -> GravatarResult.Success(Unit)
+                is GravatarResult.Success -> {
+                    avatarsFlow(email).let { avatarsFlow ->
+                        val emailAvatars = avatarsFlow.replayCache.lastOrNull()?.let {
+                            it.copy(
+                                avatars = it.avatars.filter { avatar ->
+                                    avatar.imageId != avatarId
+                                },
+                                selectedAvatarId = if (it.selectedAvatarId == avatarId) {
+                                    null
+                                } else {
+                                    it.selectedAvatarId
+                                },
+                            )
+                        }
+
+                        emailAvatars?.let { avatarsFlow.emit(it) }
+                    }
+                    GravatarResult.Success(Unit)
+                }
                 is GravatarResult.Failure -> GravatarResult.Failure(QuickEditorError.Request(result.error))
             }
         } ?: GravatarResult.Failure(QuickEditorError.TokenNotFound)

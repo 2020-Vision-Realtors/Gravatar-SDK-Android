@@ -292,8 +292,43 @@ class AvatarRepositoryTest {
         coEvery {
             avatarService.deleteAvatarCatching(avatarId = "imageId", oauthToken = "token")
         } returns GravatarResult.Success(Unit)
+        initAvatarsFlowForEmail(email, listOf(createAvatar("1", isSelected = true), createAvatar("imageId")))
 
         val result = avatarRepository.deleteAvatar(email, imageId)
+
+        avatarRepository.getAvatarsFlow(email).test {
+            assertEquals(
+                EmailAvatars(
+                    listOf(createAvatar("1", isSelected = true)),
+                    "1",
+                ),
+                awaitItem(),
+            )
+        }
+
+        assertEquals(GravatarResult.Success<Unit, QuickEditorError>(Unit), result)
+    }
+
+    @Test
+    fun `given token stored when selected avatar delete succeeds then Success result`() = runTest {
+        val imageId = "imageId"
+        coEvery { tokenStorage.getToken(any()) } returns "token"
+        coEvery {
+            avatarService.deleteAvatarCatching(avatarId = "imageId", oauthToken = "token")
+        } returns GravatarResult.Success(Unit)
+        initAvatarsFlowForEmail(email, listOf(createAvatar("1"), createAvatar("imageId", isSelected = true)))
+
+        val result = avatarRepository.deleteAvatar(email, imageId)
+
+        avatarRepository.getAvatarsFlow(email).test {
+            assertEquals(
+                EmailAvatars(
+                    listOf(createAvatar("1")),
+                    null,
+                ),
+                awaitItem(),
+            )
+        }
 
         assertEquals(GravatarResult.Success<Unit, QuickEditorError>(Unit), result)
     }
