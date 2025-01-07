@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
@@ -162,6 +163,7 @@ private fun GravatarModalBottomSheet(
                     )
                     Sheet(
                         modifier = Modifier
+                            .imePadding()
                             .clip(RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp))
                             .background(MaterialTheme.colorScheme.surfaceColorAtElevation(1.dp))
                             .widthIn(max = 640.dp)

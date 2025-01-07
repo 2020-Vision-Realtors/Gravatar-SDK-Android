@@ -1166,7 +1166,7 @@ class AvatarPickerViewModelTest {
             )
         }
         viewModel.actions.test {
-            assertEquals(AvatarPickerAction.AvatarUpdated(AvatarUpdateType.RATING), awaitItem())
+            assertEquals(AvatarPickerAction.AvatarRatingUpdated, awaitItem())
         }
     }
 
@@ -1214,7 +1214,7 @@ class AvatarPickerViewModelTest {
             )
         }
         viewModel.actions.test {
-            assertEquals(AvatarPickerAction.AvatarUpdateFailed(AvatarUpdateType.RATING), awaitItem())
+            assertEquals(AvatarPickerAction.AvatarRatingUpdateFailed, awaitItem())
         }
     }
 
@@ -1243,6 +1243,37 @@ class AvatarPickerViewModelTest {
         }
         viewModel.actions.test {
             expectNoEvents()
+        }
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    @Test
+    fun `given AvatarAltTextTapped event when received then LaunchAvatarAltText action is launched`() = runTest {
+        val avatar = createAvatar("1")
+        val emailAvatarsCopy = emailAvatars.copy(avatars = listOf(avatar), selectedAvatarId = avatar.imageId)
+        coEvery { avatarRepository.getAvatars(email) } returns GravatarResult.Success(emailAvatarsCopy)
+        coEvery { profileService.retrieveCatching(email) } returns GravatarResult.Success(profile)
+
+        viewModel = initViewModel()
+
+        advanceUntilIdle()
+
+        viewModel.actions.test {
+            viewModel.onEvent(AvatarPickerEvent.AvatarAltTextTapped(avatar.imageId))
+            assertEquals(AvatarPickerAction.LaunchAvatarAltText(email, avatar), awaitItem())
+        }
+
+        viewModel.uiState.test {
+            assertEquals(
+                AvatarPickerUiState(
+                    email = email,
+                    emailAvatars = emailAvatarsCopy,
+                    profile = ComponentState.Loaded(profile),
+                    avatarPickerContentLayout = avatarPickerContentLayout,
+                    scrollToIndex = 0,
+                ),
+                awaitItem(),
+            )
         }
     }
 

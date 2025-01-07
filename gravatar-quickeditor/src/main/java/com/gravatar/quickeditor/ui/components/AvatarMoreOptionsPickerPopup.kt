@@ -32,6 +32,15 @@ internal fun AvatarMoreOptionsPickerPopup(
         popupMenu = PickerPopupMenu(
             items = listOf(
                 PickerPopupItem(
+                    text = stringResource(R.string.gravatar_qe_selectable_avatar_more_options_alt_text),
+                    iconRes = R.drawable.gravatar_avatar_more_options_alt_text,
+                    contentDescription =
+                        R.string.gravatar_qe_selectable_avatar_more_options_alt_text_content_description,
+                    onClick = {
+                        onAvatarOptionClicked(AvatarOption.AltText)
+                    },
+                ),
+                PickerPopupItem(
                     text = stringResource(R.string.gravatar_qe_selectable_avatar_more_options_rating),
                     iconRes = R.drawable.gravatar_avatar_more_options_rating,
                     contentDescription = R.string.gravatar_qe_selectable_avatar_more_options_rating,

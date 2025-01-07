@@ -55,6 +55,15 @@ public final class com/gravatar/quickeditor/ui/GravatarQuickEditorResult : java/
 	public static fun values ()[Lcom/gravatar/quickeditor/ui/GravatarQuickEditorResult;
 }
 
+public final class com/gravatar/quickeditor/ui/alttext/ComposableSingletons$AltTextPageKt {
+	public static final field INSTANCE Lcom/gravatar/quickeditor/ui/alttext/ComposableSingletons$AltTextPageKt;
+	public static field lambda-1 Lkotlin/jvm/functions/Function2;
+	public static field lambda-2 Lkotlin/jvm/functions/Function2;
+	public fun <init> ()V
+	public final fun getLambda-1$gravatar_quickeditor_release ()Lkotlin/jvm/functions/Function2;
+	public final fun getLambda-2$gravatar_quickeditor_release ()Lkotlin/jvm/functions/Function2;
+}
+
 public final class com/gravatar/quickeditor/ui/avatarpicker/ComposableSingletons$AvatarPickerKt {
 	public static final field INSTANCE Lcom/gravatar/quickeditor/ui/avatarpicker/ComposableSingletons$AvatarPickerKt;
 	public static field lambda-1 Lkotlin/jvm/functions/Function2;
@@ -182,9 +191,13 @@ public final class com/gravatar/quickeditor/ui/components/ComposableSingletons$Q
 	public static final field INSTANCE Lcom/gravatar/quickeditor/ui/components/ComposableSingletons$QEButtonKt;
 	public static field lambda-1 Lkotlin/jvm/functions/Function2;
 	public static field lambda-2 Lkotlin/jvm/functions/Function2;
+	public static field lambda-3 Lkotlin/jvm/functions/Function2;
+	public static field lambda-4 Lkotlin/jvm/functions/Function2;
 	public fun <init> ()V
 	public final fun getLambda-1$gravatar_quickeditor_release ()Lkotlin/jvm/functions/Function2;
 	public final fun getLambda-2$gravatar_quickeditor_release ()Lkotlin/jvm/functions/Function2;
+	public final fun getLambda-3$gravatar_quickeditor_release ()Lkotlin/jvm/functions/Function2;
+	public final fun getLambda-4$gravatar_quickeditor_release ()Lkotlin/jvm/functions/Function2;
 }
 
 public final class com/gravatar/quickeditor/ui/components/ComposableSingletons$QESectionMessageKt {

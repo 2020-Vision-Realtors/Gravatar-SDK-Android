@@ -1,6 +1,8 @@
 package com.gravatar.quickeditor.ui.avatarpicker
 
 import android.net.Uri
+import com.gravatar.restapi.models.Avatar
+import com.gravatar.types.Email
 import java.io.File
 
 internal sealed class AvatarPickerAction {
@@ -18,11 +20,9 @@ internal sealed class AvatarPickerAction {
 
     data class AvatarDeletionFailed(val avatarId: String) : AvatarPickerAction()
 
-    data class AvatarUpdated(val type: AvatarUpdateType) : AvatarPickerAction()
+    data object AvatarRatingUpdated : AvatarPickerAction()
 
-    data class AvatarUpdateFailed(val type: AvatarUpdateType) : AvatarPickerAction()
-}
+    data object AvatarRatingUpdateFailed : AvatarPickerAction()
 
-internal enum class AvatarUpdateType {
-    RATING,
+    data class LaunchAvatarAltText(val email: Email, val avatar: Avatar) : AvatarPickerAction()
 }
