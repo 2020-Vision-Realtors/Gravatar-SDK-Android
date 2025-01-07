@@ -96,7 +96,7 @@ internal fun AltTextPage(
     }
 
     GravatarTheme {
-        Box(modifier = modifier.wrapContentSize()) {
+        Box(modifier = modifier.padding(16.dp).wrapContentSize()) {
             state.let { altTextState ->
                 AltTextPage(
                     altTextState = altTextState,

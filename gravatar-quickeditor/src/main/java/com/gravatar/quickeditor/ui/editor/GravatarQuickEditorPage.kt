@@ -2,11 +2,8 @@ package com.gravatar.quickeditor.ui.editor
 
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
-import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -179,7 +176,6 @@ private fun NavGraphBuilder.addAvatarPickerGraph(
                 altText = altText,
                 avatarUrl = avatarUrl,
                 onBackPressed = { navController.popBackStack() },
-                modifier = Modifier.padding(16.dp),
             )
         }
     }
