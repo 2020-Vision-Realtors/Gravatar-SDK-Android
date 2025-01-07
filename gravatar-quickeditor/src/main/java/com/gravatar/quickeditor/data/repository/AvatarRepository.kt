@@ -7,6 +7,7 @@ import com.gravatar.quickeditor.data.storage.TokenStorage
 import com.gravatar.quickeditor.ui.avatarpicker.copy
 import com.gravatar.restapi.models.Avatar
 import com.gravatar.services.AvatarService
+import com.gravatar.services.ErrorType
 import com.gravatar.services.GravatarResult
 import com.gravatar.types.Email
 import kotlinx.coroutines.CoroutineDispatcher
@@ -55,22 +56,7 @@ internal class AvatarRepository(
         token?.let {
             when (val result = avatarService.setAvatarCatching(email.hash().toString(), avatarId, token)) {
                 is GravatarResult.Success -> {
-                    avatarsFlow(email).let { avatarsFlow ->
-                        val emailAvatars = avatarsFlow.replayCache.lastOrNull()?.let {
-                            it.copy(
-                                avatars = it.avatars.map { avatar ->
-                                    if (avatar.imageId == avatarId) {
-                                        avatar.copy(selected = true)
-                                    } else {
-                                        avatar.copy(selected = false)
-                                    }
-                                },
-                                selectedAvatarId = avatarId,
-                            )
-                        }
-
-                        emailAvatars?.let { avatarsFlow.emit(it) }
-                    }
+                    updateAvatarSelectionLocally(email, avatarId)
                     GravatarResult.Success(Unit)
                 }
 
@@ -88,37 +74,7 @@ internal class AvatarRepository(
                     val result = avatarService.uploadCatching(avatarUri.toFile(), token, hash)
                 ) {
                     is GravatarResult.Success -> {
-                        avatarsFlow(email).let { avatarsFlow ->
-                            val emailAvatars = avatarsFlow.replayCache.lastOrNull()?.let {
-                                val avatars = buildList {
-                                    add(result.value)
-                                    it.avatars.filter { avatar ->
-                                        avatar.imageId != result.value.imageId
-                                    }.let { avatars ->
-                                        addAll(
-                                            if (result.value.selected == true) {
-                                                avatars.map { avatar ->
-                                                    avatar.copy(selected = false)
-                                                }
-                                            } else {
-                                                avatars
-                                            },
-                                        )
-                                    }
-                                }
-                                it.copy(
-                                    avatars = avatars,
-                                    selectedAvatarId = if (result.value.selected == true) {
-                                        result.value.imageId
-                                    } else {
-                                        it.selectedAvatarId
-                                    },
-                                )
-                            }
-
-                            emailAvatars?.let { avatarsFlow.emit(it) }
-                        }
-
+                        updateAvatarUploadedLocally(email, result)
                         GravatarResult.Success(result.value)
                     }
 
@@ -134,22 +90,7 @@ internal class AvatarRepository(
         token?.let {
             when (val result = avatarService.deleteAvatarCatching(avatarId, token)) {
                 is GravatarResult.Success -> {
-                    avatarsFlow(email).let { avatarsFlow ->
-                        val emailAvatars = avatarsFlow.replayCache.lastOrNull()?.let {
-                            it.copy(
-                                avatars = it.avatars.filter { avatar ->
-                                    avatar.imageId != avatarId
-                                },
-                                selectedAvatarId = if (it.selectedAvatarId == avatarId) {
-                                    null
-                                } else {
-                                    it.selectedAvatarId
-                                },
-                            )
-                        }
-
-                        emailAvatars?.let { avatarsFlow.emit(it) }
-                    }
+                    deleteAvatarLocally(email, avatarId)
                     GravatarResult.Success(Unit)
                 }
                 is GravatarResult.Failure -> GravatarResult.Failure(QuickEditorError.Request(result.error))
@@ -167,7 +108,7 @@ internal class AvatarRepository(
         token?.let {
             when (val result = avatarService.updateAvatarCatching(avatarId, token, rating, altText)) {
                 is GravatarResult.Success -> {
-                    updateAvatarFlow(email, result.value)
+                    updateAvatarLocally(email, result.value)
                     GravatarResult.Success(result.value)
                 }
 
@@ -176,7 +117,78 @@ internal class AvatarRepository(
         } ?: GravatarResult.Failure(QuickEditorError.TokenNotFound)
     }
 
-    private suspend fun updateAvatarFlow(email: Email, avatarToUpdate: Avatar) {
+    private suspend fun updateAvatarSelectionLocally(email: Email, avatarId: String) {
+        avatarsFlow(email).let { avatarsFlow ->
+            val emailAvatars = avatarsFlow.replayCache.lastOrNull()?.let {
+                it.copy(
+                    avatars = it.avatars.map { avatar ->
+                        if (avatar.imageId == avatarId) {
+                            avatar.copy(selected = true)
+                        } else {
+                            avatar.copy(selected = false)
+                        }
+                    },
+                    selectedAvatarId = avatarId,
+                )
+            }
+
+            emailAvatars?.let { avatarsFlow.emit(it) }
+        }
+    }
+
+    private suspend fun updateAvatarUploadedLocally(email: Email, result: GravatarResult.Success<Avatar, ErrorType>) {
+        avatarsFlow(email).let { avatarsFlow ->
+            val emailAvatars = avatarsFlow.replayCache.lastOrNull()?.let {
+                val avatars = buildList {
+                    add(result.value)
+                    it.avatars.filter { avatar ->
+                        avatar.imageId != result.value.imageId
+                    }.let { avatars ->
+                        addAll(
+                            if (result.value.selected == true) {
+                                avatars.map { avatar ->
+                                    avatar.copy(selected = false)
+                                }
+                            } else {
+                                avatars
+                            },
+                        )
+                    }
+                }
+                it.copy(
+                    avatars = avatars,
+                    selectedAvatarId = if (result.value.selected == true) {
+                        result.value.imageId
+                    } else {
+                        it.selectedAvatarId
+                    },
+                )
+            }
+
+            emailAvatars?.let { avatarsFlow.emit(it) }
+        }
+    }
+
+    private suspend fun deleteAvatarLocally(email: Email, avatarId: String) {
+        avatarsFlow(email).let { avatarsFlow ->
+            val emailAvatars = avatarsFlow.replayCache.lastOrNull()?.let {
+                it.copy(
+                    avatars = it.avatars.filter { avatar ->
+                        avatar.imageId != avatarId
+                    },
+                    selectedAvatarId = if (it.selectedAvatarId == avatarId) {
+                        null
+                    } else {
+                        it.selectedAvatarId
+                    },
+                )
+            }
+
+            emailAvatars?.let { avatarsFlow.emit(it) }
+        }
+    }
+
+    private suspend fun updateAvatarLocally(email: Email, avatarToUpdate: Avatar) {
         avatarsFlow(email).let { avatarsFlow ->
             val emailAvatars = avatarsFlow.replayCache.lastOrNull()?.let {
                 it.copy(
