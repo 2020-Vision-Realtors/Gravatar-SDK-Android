@@ -179,6 +179,96 @@ class AvatarRepositoryTest {
     }
 
     @Test
+    fun `given token stored when avatar upload succeeds and imageId already in list then avatar is first element`() =
+        runTest {
+            val existingAvatar = createAvatar("3")
+            val newAvatar = createAvatar("3")
+            mockkStatic("androidx.core.net.UriKt")
+            val file = mockk<File>()
+            val uri = mockk<Uri> {
+                every { toFile() } returns file
+            }
+            coEvery { tokenStorage.getToken(any()) } returns "token"
+            coEvery {
+                avatarService.uploadCatching(any(), any(), any(), any())
+            } returns GravatarResult.Success(newAvatar)
+            initAvatarsFlowForEmail(email, listOf(createAvatar("1"), createAvatar("2"), existingAvatar))
+
+            val result = avatarRepository.uploadAvatar(email, uri)
+
+            assertEquals(GravatarResult.Success<Avatar, QuickEditorError>(newAvatar), result)
+
+            avatarRepository.getAvatarsFlow(email).test {
+                assertEquals(
+                    EmailAvatars(
+                        listOf(newAvatar, createAvatar("1"), createAvatar("2")),
+                        null,
+                    ),
+                    awaitItem(),
+                )
+            }
+        }
+
+    @Test
+    fun `given token stored when unselected avatar upload succeeds then selectedAvatarId remains the same`() = runTest {
+        val newAvatar = createAvatar("3", isSelected = false)
+        mockkStatic("androidx.core.net.UriKt")
+        val file = mockk<File>()
+        val uri = mockk<Uri> {
+            every { toFile() } returns file
+        }
+        coEvery { tokenStorage.getToken(any()) } returns "token"
+        coEvery {
+            avatarService.uploadCatching(any(), any(), any(), any())
+        } returns GravatarResult.Success(newAvatar)
+        initAvatarsFlowForEmail(email, listOf(createAvatar("1"), createAvatar("2", isSelected = true)))
+
+        val result = avatarRepository.uploadAvatar(email, uri)
+
+        assertEquals(GravatarResult.Success<Avatar, QuickEditorError>(newAvatar), result)
+
+        avatarRepository.getAvatarsFlow(email).test {
+            assertEquals(
+                EmailAvatars(
+                    listOf(newAvatar, createAvatar("1"), createAvatar("2", isSelected = true)),
+                    "2",
+                ),
+                awaitItem(),
+            )
+        }
+    }
+
+    @Test
+    fun `given token stored when selected avatar upload succeeds then flow is updated with new selected avatar`() =
+        runTest {
+            val newAvatar = createAvatar("3", isSelected = true)
+            mockkStatic("androidx.core.net.UriKt")
+            val file = mockk<File>()
+            val uri = mockk<Uri> {
+                every { toFile() } returns file
+            }
+            coEvery { tokenStorage.getToken(any()) } returns "token"
+            coEvery {
+                avatarService.uploadCatching(any(), any(), any(), any())
+            } returns GravatarResult.Success(newAvatar)
+            initAvatarsFlowForEmail(email, listOf(createAvatar("1"), createAvatar("2", isSelected = true)))
+
+            val result = avatarRepository.uploadAvatar(email, uri)
+
+            assertEquals(GravatarResult.Success<Avatar, QuickEditorError>(newAvatar), result)
+
+            avatarRepository.getAvatarsFlow(email).test {
+                assertEquals(
+                    EmailAvatars(
+                        listOf(newAvatar, createAvatar("1"), createAvatar("2", isSelected = false)),
+                        "3",
+                    ),
+                    awaitItem(),
+                )
+            }
+        }
+
+    @Test
     fun `given token stored when avatar upload fails then Failure result`() = runTest {
         mockkStatic("androidx.core.net.UriKt")
         val file = mockk<File>()

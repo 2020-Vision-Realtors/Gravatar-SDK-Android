@@ -73,6 +73,7 @@ internal class AvatarRepository(
                     }
                     GravatarResult.Success(Unit)
                 }
+
                 is GravatarResult.Failure -> GravatarResult.Failure(QuickEditorError.Request(result.error))
             }
         } ?: GravatarResult.Failure(QuickEditorError.TokenNotFound)
@@ -86,7 +87,41 @@ internal class AvatarRepository(
                 when (
                     val result = avatarService.uploadCatching(avatarUri.toFile(), token, hash)
                 ) {
-                    is GravatarResult.Success -> GravatarResult.Success(result.value)
+                    is GravatarResult.Success -> {
+                        avatarsFlow(email).let { avatarsFlow ->
+                            val emailAvatars = avatarsFlow.replayCache.lastOrNull()?.let {
+                                val avatars = buildList {
+                                    add(result.value)
+                                    it.avatars.filter { avatar ->
+                                        avatar.imageId != result.value.imageId
+                                    }.let { avatars ->
+                                        addAll(
+                                            if (result.value.selected == true) {
+                                                avatars.map { avatar ->
+                                                    avatar.copy(selected = false)
+                                                }
+                                            } else {
+                                                avatars
+                                            },
+                                        )
+                                    }
+                                }
+                                it.copy(
+                                    avatars = avatars,
+                                    selectedAvatarId = if (result.value.selected == true) {
+                                        result.value.imageId
+                                    } else {
+                                        it.selectedAvatarId
+                                    },
+                                )
+                            }
+
+                            emailAvatars?.let { avatarsFlow.emit(it) }
+                        }
+
+                        GravatarResult.Success(result.value)
+                    }
+
                     is GravatarResult.Failure -> GravatarResult.Failure(QuickEditorError.Request(result.error))
                 }
             } ?: GravatarResult.Failure(QuickEditorError.TokenNotFound)

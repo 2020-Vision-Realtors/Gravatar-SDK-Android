@@ -236,22 +236,8 @@ internal class AvatarPickerViewModel(
                         _actions.send(AvatarPickerAction.AvatarSelected)
                     }
                     _uiState.update { currentState ->
-                        val emailAvatars = currentState.emailAvatars?.copy(
-                            avatars = buildList {
-                                add(avatar)
-                                addAll(
-                                    currentState.emailAvatars.avatars.filter { it.imageId != avatar.imageId },
-                                )
-                            },
-                            selectedAvatarId = if (avatar.selected == true) {
-                                avatar.imageId
-                            } else {
-                                currentState.emailAvatars.selectedAvatarId
-                            },
-                        )
                         currentState.copy(
                             uploadingAvatar = null,
-                            emailAvatars = emailAvatars,
                             scrollToIndex = null,
                             avatarUpdates = if (avatar.selected == true) {
                                 currentState.avatarUpdates.inc()
