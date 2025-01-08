@@ -51,7 +51,7 @@ internal class AvatarPickerViewModel(
     init {
         refresh()
         nonAvatarSelectedAlertObserver()
-        avatarsObserver()
+        collectAvatars()
     }
 
     fun onEvent(event: AvatarPickerEvent) {
@@ -420,7 +420,7 @@ internal class AvatarPickerViewModel(
             .launchIn(viewModelScope)
     }
 
-    private fun avatarsObserver() {
+    private fun collectAvatars() {
         viewModelScope.launch {
             avatarRepository.getAvatarsFlow(email).collect { avatars ->
                 _uiState.update {
