@@ -3,6 +3,7 @@ package com.gravatar.quickeditor.ui.avatarpicker
 import android.net.Uri
 import app.cash.turbine.test
 import com.gravatar.extensions.defaultProfile
+import com.gravatar.quickeditor.createAvatar
 import com.gravatar.quickeditor.data.DownloadManagerError
 import com.gravatar.quickeditor.data.FileUtils
 import com.gravatar.quickeditor.data.ImageDownloader
@@ -33,7 +34,6 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import java.io.File
-import java.net.URI
 
 @Suppress("LargeClass")
 class AvatarPickerViewModelTest {
@@ -1219,18 +1219,4 @@ class AvatarPickerViewModelTest {
         fileUtils = fileUtils,
         imageDownloader = imageDownloader,
     )
-
-    private fun createAvatar(
-        id: String,
-        isSelected: Boolean? = null,
-        rating: Avatar.Rating = Avatar.Rating.G,
-        altText: String = "alt",
-    ) = Avatar {
-        imageUrl = URI.create("https://gravatar.com/avatar/test")
-        imageId = id
-        this.rating = rating
-        this.altText = altText
-        updatedDate = ""
-        selected = isSelected
-    }
 }
