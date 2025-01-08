@@ -21,19 +21,13 @@ internal class AvatarRepository(
 ) {
     fun getAvatarsFlow(email: Email) = avatarStorage.avatarsFlow(email).asSharedFlow()
 
-    suspend fun getAvatars(email: Email): GravatarResult<EmailAvatars, QuickEditorError> = withContext(dispatcher) {
+    suspend fun getAvatars(email: Email): GravatarResult<List<Avatar>, QuickEditorError> = withContext(dispatcher) {
         val token = tokenStorage.getToken(email.hash().toString())
         token?.let {
             when (val avatarsResult = avatarService.retrieveCatching(token, email.hash())) {
                 is GravatarResult.Success -> {
-                    val emailAvatars = avatarsResult.value.let { avatars ->
-                        EmailAvatars(
-                            avatars,
-                            avatars.firstOrNull { it.selected == true }?.imageId,
-                        )
-                    }
-                    avatarStorage.storeAvatars(emailAvatars, email)
-                    GravatarResult.Success(emailAvatars)
+                    avatarStorage.storeAvatars(avatarsResult.value, email)
+                    GravatarResult.Success(avatarsResult.value)
                 }
 
                 is GravatarResult.Failure -> {
@@ -111,8 +105,3 @@ internal class AvatarRepository(
         } ?: GravatarResult.Failure(QuickEditorError.TokenNotFound)
     }
 }
-
-internal data class EmailAvatars(
-    val avatars: List<Avatar>,
-    val selectedAvatarId: String?,
-)

@@ -51,7 +51,6 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.gravatar.extensions.defaultProfile
 import com.gravatar.quickeditor.R
-import com.gravatar.quickeditor.data.repository.EmailAvatars
 import com.gravatar.quickeditor.ui.components.AlertBanner
 import com.gravatar.quickeditor.ui.components.AvatarDeletionConfirmationDialog
 import com.gravatar.quickeditor.ui.components.AvatarOption

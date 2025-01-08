@@ -299,7 +299,7 @@ internal class AvatarPickerViewModel(
         when (val result = avatarRepository.getAvatars(email)) {
             is GravatarResult.Success -> {
                 _uiState.update { currentState ->
-                    val emailAvatars = result.value
+                    val emailAvatars = result.value.toEmailAvatars()
                     currentState.copy(
                         emailAvatars = emailAvatars,
                         scrollToIndex = if (scrollToSelected && emailAvatars.avatars.isNotEmpty()) {
@@ -422,9 +422,9 @@ internal class AvatarPickerViewModel(
 
     private fun avatarsObserver() {
         viewModelScope.launch {
-            avatarRepository.getAvatarsFlow(email).collect { emailAvatars ->
+            avatarRepository.getAvatarsFlow(email).collect { avatars ->
                 _uiState.update {
-                    it.copy(emailAvatars = emailAvatars)
+                    it.copy(emailAvatars = avatars.toEmailAvatars())
                 }
             }
         }
@@ -487,4 +487,16 @@ internal fun Avatar.copy(rating: Avatar.Rating? = null, altText: String? = null,
         this.altText = altText ?: this@copy.altText
         this.rating = rating ?: this@copy.rating
     }
+}
+
+internal data class EmailAvatars(
+    val avatars: List<Avatar>,
+    val selectedAvatarId: String?,
+)
+
+internal fun List<Avatar>.toEmailAvatars(): EmailAvatars {
+    return EmailAvatars(
+        avatars = this,
+        selectedAvatarId = firstOrNull { avatar -> avatar.selected == true }?.imageId,
+    )
 }

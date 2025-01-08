@@ -6,6 +6,7 @@ import com.gravatar.quickeditor.data.models.QuickEditorError
 import com.gravatar.quickeditor.data.storage.AvatarStorage
 import com.gravatar.quickeditor.data.storage.DataStoreTokenStorage
 import com.gravatar.quickeditor.ui.CoroutineTestRule
+import com.gravatar.quickeditor.ui.avatarpicker.EmailAvatars
 import com.gravatar.restapi.models.Avatar
 import com.gravatar.services.AvatarService
 import com.gravatar.services.ErrorType
@@ -71,7 +72,7 @@ class AvatarRepositoryTest {
         val result = avatarRepository.getAvatars(email)
 
         assertEquals(
-            GravatarResult.Failure<EmailAvatars, QuickEditorError>(QuickEditorError.Request(ErrorType.Server)),
+            GravatarResult.Failure<List<Avatar>, QuickEditorError>(QuickEditorError.Request(ErrorType.Server)),
             result,
         )
         coVerify(exactly = 0) { avatarStorage.storeAvatars(any(), any()) }
@@ -86,13 +87,13 @@ class AvatarRepositoryTest {
         coEvery { avatarStorage.storeAvatars(any(), any()) } returns Unit
 
         val result = avatarRepository.getAvatars(email)
-        val expectedEmailAvatars = EmailAvatars(listOf(avatar), imageId)
+        val expectedAvatars = listOf(avatar)
 
         assertEquals(
-            GravatarResult.Success<EmailAvatars, QuickEditorError>(expectedEmailAvatars),
+            GravatarResult.Success<List<Avatar>, QuickEditorError>(expectedAvatars),
             result,
         )
-        coVerify { avatarStorage.storeAvatars(expectedEmailAvatars, email) }
+        coVerify { avatarStorage.storeAvatars(expectedAvatars, email) }
     }
 
     @Test

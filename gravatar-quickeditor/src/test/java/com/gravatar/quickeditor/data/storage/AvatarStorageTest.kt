@@ -2,7 +2,6 @@ package com.gravatar.quickeditor.data.storage
 
 import app.cash.turbine.test
 import com.gravatar.quickeditor.createAvatar
-import com.gravatar.quickeditor.data.repository.EmailAvatars
 import com.gravatar.types.Email
 import junit.framework.TestCase.assertEquals
 import kotlinx.coroutines.test.runTest
@@ -22,17 +21,14 @@ class AvatarStorageTest {
         val email = Email("email")
 
         // Given
-        val emailAvatars = EmailAvatars(
-            avatars = listOf(createAvatar(id = "imageId", isSelected = true)),
-            selectedAvatarId = "imageId",
-        )
+        val avatars = listOf(createAvatar(id = "imageId", isSelected = true))
 
         // When
-        avatarStorage.storeAvatars(emailAvatars, email)
+        avatarStorage.storeAvatars(avatars, email)
 
         // Then
         avatarStorage.avatarsFlow(email).test {
-            assertEquals(emailAvatars, awaitItem())
+            assertEquals(avatars, awaitItem())
         }
     }
 
@@ -41,14 +37,11 @@ class AvatarStorageTest {
         val email = Email("email")
 
         // Given
-        val emailAvatars = EmailAvatars(
-            avatars = listOf(
-                createAvatar("otherAvatar", isSelected = true),
-                createAvatar(id = "imageId", isSelected = false),
-            ),
-            selectedAvatarId = "otherAvatar",
+        val avatars = listOf(
+            createAvatar("otherAvatar", isSelected = true),
+            createAvatar(id = "imageId", isSelected = false),
         )
-        avatarStorage.storeAvatars(emailAvatars, email)
+        avatarStorage.storeAvatars(avatars, email)
 
         // When
         avatarStorage.markAvatarAsSelected(email, "imageId")
@@ -56,12 +49,9 @@ class AvatarStorageTest {
         // Then
         avatarStorage.avatarsFlow(email).test {
             assertEquals(
-                emailAvatars.copy(
-                    avatars = listOf(
-                        createAvatar("otherAvatar", isSelected = false),
-                        createAvatar(id = "imageId", isSelected = true),
-                    ),
-                    selectedAvatarId = "imageId",
+                listOf(
+                    createAvatar("otherAvatar", isSelected = false),
+                    createAvatar(id = "imageId", isSelected = true),
                 ),
                 awaitItem(),
             )
@@ -73,14 +63,11 @@ class AvatarStorageTest {
         val email = Email("email")
 
         // Given
-        val emailAvatars = EmailAvatars(
-            avatars = listOf(
-                createAvatar("otherAvatar", isSelected = true),
-                createAvatar("imageId", isSelected = false),
-            ),
-            selectedAvatarId = "imageId",
+        val avatars = listOf(
+            createAvatar("otherAvatar", isSelected = true),
+            createAvatar("imageId", isSelected = false),
         )
-        avatarStorage.storeAvatars(emailAvatars, email)
+        avatarStorage.storeAvatars(avatars, email)
 
         // When
         val updatedAvatar = createAvatar("imageId", isSelected = true)
@@ -89,10 +76,7 @@ class AvatarStorageTest {
         // Then
         avatarStorage.avatarsFlow(email).test {
             assertEquals(
-                emailAvatars.copy(
-                    avatars = listOf(updatedAvatar, createAvatar("otherAvatar", isSelected = false)),
-                    selectedAvatarId = "imageId",
-                ),
+                listOf(updatedAvatar, createAvatar("otherAvatar", isSelected = false)),
                 awaitItem(),
             )
         }
@@ -103,14 +87,11 @@ class AvatarStorageTest {
         val email = Email("email")
 
         // Given
-        val emailAvatars = EmailAvatars(
-            avatars = listOf(
-                createAvatar("otherAvatar", isSelected = false),
-                createAvatar("imageId", isSelected = true),
-            ),
-            selectedAvatarId = "imageId",
+        val avatars = listOf(
+            createAvatar("otherAvatar", isSelected = false),
+            createAvatar("imageId", isSelected = true),
         )
-        avatarStorage.storeAvatars(emailAvatars, email)
+        avatarStorage.storeAvatars(avatars, email)
 
         // When
         avatarStorage.deleteAvatar(email, "imageId")
@@ -118,10 +99,7 @@ class AvatarStorageTest {
         // Then
         avatarStorage.avatarsFlow(email).test {
             assertEquals(
-                emailAvatars.copy(
-                    avatars = listOf(createAvatar("otherAvatar", isSelected = false)),
-                    selectedAvatarId = null,
-                ),
+                listOf(createAvatar("otherAvatar", isSelected = false)),
                 awaitItem(),
             )
         }
@@ -132,11 +110,8 @@ class AvatarStorageTest {
         val email = Email("email")
 
         // Given
-        val emailAvatars = EmailAvatars(
-            avatars = listOf(createAvatar("otherAvatar"), createAvatar("imageId", altText = "altText")),
-            selectedAvatarId = null,
-        )
-        avatarStorage.storeAvatars(emailAvatars, email)
+        val avatars = listOf(createAvatar("otherAvatar"), createAvatar("imageId", altText = "altText"))
+        avatarStorage.storeAvatars(avatars, email)
 
         // When
         val updatedAvatar = createAvatar("imageId", altText = "newAltText")
@@ -145,10 +120,7 @@ class AvatarStorageTest {
         // Then
         avatarStorage.avatarsFlow(email).test {
             assertEquals(
-                emailAvatars.copy(
-                    avatars = listOf(createAvatar("otherAvatar"), updatedAvatar),
-                    selectedAvatarId = null,
-                ),
+                listOf(createAvatar("otherAvatar"), updatedAvatar),
                 awaitItem(),
             )
         }
