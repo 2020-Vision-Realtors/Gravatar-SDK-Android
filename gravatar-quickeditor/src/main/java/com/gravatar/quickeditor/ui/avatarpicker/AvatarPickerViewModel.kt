@@ -422,7 +422,7 @@ internal class AvatarPickerViewModel(
 
     private fun collectAvatars() {
         viewModelScope.launch {
-            avatarRepository.getAvatarsFlow(email).collect { avatars ->
+            avatarRepository.getAvatars(email).collect { avatars ->
                 _uiState.update {
                     it.copy(emailAvatars = avatars.toEmailAvatars())
                 }
