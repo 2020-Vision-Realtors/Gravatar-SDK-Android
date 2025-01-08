@@ -296,7 +296,7 @@ internal class AvatarPickerViewModel(
         if (showLoading) {
             _uiState.update { currentState -> currentState.copy(isLoading = true) }
         }
-        when (val result = avatarRepository.getAvatars(email)) {
+        when (val result = avatarRepository.refreshAvatars(email)) {
             is GravatarResult.Success -> {
                 _uiState.update { currentState ->
                     val emailAvatars = result.value.toEmailAvatars()

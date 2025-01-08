@@ -58,7 +58,7 @@ class AvatarRepositoryTest {
     fun `given email when token not found then TokenNotFound result`() = runTest {
         coEvery { tokenStorage.getToken(any()) } returns null
 
-        val result = avatarRepository.getAvatars(email)
+        val result = avatarRepository.refreshAvatars(email)
 
         assertEquals(GravatarResult.Failure<EmailAvatars, QuickEditorError>(QuickEditorError.TokenNotFound), result)
         coVerify(exactly = 0) { avatarStorage.storeAvatars(any(), any()) }
@@ -69,7 +69,7 @@ class AvatarRepositoryTest {
         coEvery { tokenStorage.getToken(any()) } returns DEFAULT_TOKEN
         coEvery { avatarService.retrieveCatching(any(), any()) } returns GravatarResult.Failure(ErrorType.Server)
 
-        val result = avatarRepository.getAvatars(email)
+        val result = avatarRepository.refreshAvatars(email)
 
         assertEquals(
             GravatarResult.Failure<List<Avatar>, QuickEditorError>(QuickEditorError.Request(ErrorType.Server)),
@@ -86,7 +86,7 @@ class AvatarRepositoryTest {
         coEvery { avatarService.retrieveCatching(any(), any()) } returns GravatarResult.Success(listOf(avatar))
         coEvery { avatarStorage.storeAvatars(any(), any()) } returns Unit
 
-        val result = avatarRepository.getAvatars(email)
+        val result = avatarRepository.refreshAvatars(email)
         val expectedAvatars = listOf(avatar)
 
         assertEquals(
@@ -300,7 +300,7 @@ class AvatarRepositoryTest {
         coEvery { avatarService.retrieveCatching(any(), any()) } returns GravatarResult.Success(avatars)
         coEvery { avatarStorage.storeAvatars(any(), any()) } returns Unit
 
-        avatarRepository.getAvatars(email)
+        avatarRepository.refreshAvatars(email)
     }
 
     private fun createAvatar(
