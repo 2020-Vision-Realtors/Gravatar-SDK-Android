@@ -17,7 +17,7 @@ class AvatarStorageTest {
     }
 
     @Test
-    fun `given avatars when storeAvatars then avatarsFlow emits a avatars`() = runTest {
+    fun `given avatars when storeAvatars then avatarsFlow emits avatars`() = runTest {
         val email = Email("email")
 
         // Given
@@ -33,7 +33,7 @@ class AvatarStorageTest {
     }
 
     @Test
-    fun `given avatarId when selectAvatar then avatarsFlow emits a avatars with selected avatar`() = runTest {
+    fun `given avatarId when selectAvatar then avatarsFlow emits avatars with selected avatar`() = runTest {
         val email = Email("email")
 
         // Given
@@ -59,7 +59,7 @@ class AvatarStorageTest {
     }
 
     @Test
-    fun `given avatar when addAvatar then avatarsFlow emits a avatars with updated avatar`() = runTest {
+    fun `given avatar when addAvatar then avatarsFlow emits avatars`() = runTest {
         val email = Email("email")
 
         // Given
@@ -83,7 +83,7 @@ class AvatarStorageTest {
     }
 
     @Test
-    fun `given avatarId when deleteAvatar then avatarsFlow emits a avatars without deleted avatar`() = runTest {
+    fun `given avatarId when deleteAvatar then avatarsFlow emits avatars without deleted avatar`() = runTest {
         val email = Email("email")
 
         // Given
@@ -106,7 +106,7 @@ class AvatarStorageTest {
     }
 
     @Test
-    fun `given avatar when updateAvatar then avatarsFlow emits a avatars with updated avatar`() = runTest {
+    fun `given avatar when updateAvatar then avatarsFlow emits avatars with updated avatar`() = runTest {
         val email = Email("email")
 
         // Given
