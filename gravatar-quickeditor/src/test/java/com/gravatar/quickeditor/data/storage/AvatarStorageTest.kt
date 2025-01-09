@@ -33,7 +33,7 @@ class AvatarStorageTest {
     }
 
     @Test
-    fun `given avatarId when markAvatarAsSelected then avatarsFlow emits a avatars with selected avatar`() = runTest {
+    fun `given avatarId when selectAvatar then avatarsFlow emits a avatars with selected avatar`() = runTest {
         val email = Email("email")
 
         // Given
@@ -44,7 +44,7 @@ class AvatarStorageTest {
         avatarStorage.storeAvatars(avatars, email)
 
         // When
-        avatarStorage.markAvatarAsSelected(email, "imageId")
+        avatarStorage.selectAvatar(avatarId = "imageId", email = email)
 
         // Then
         avatarStorage.avatarsFlow(email).test {

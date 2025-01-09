@@ -15,7 +15,7 @@ internal class AvatarStorage {
         avatarsFlow(email).emit(avatars)
     }
 
-    internal suspend fun markAvatarAsSelected(email: Email, avatarId: String) {
+    internal suspend fun selectAvatar(avatarId: String, email: Email) {
         avatarsFlow(email).let { avatarsFlow ->
             val avatars = avatarsFlow.replayCache.lastOrNull()?.let {
                 it.map { avatar ->

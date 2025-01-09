@@ -103,7 +103,7 @@ class AvatarRepositoryTest {
         val result = avatarRepository.selectAvatar(email, "avatarId")
 
         assertEquals(GravatarResult.Failure<String, QuickEditorError>(QuickEditorError.TokenNotFound), result)
-        coVerify(exactly = 0) { avatarStorage.markAvatarAsSelected(any(), any()) }
+        coVerify(exactly = 0) { avatarStorage.selectAvatar(any(), any()) }
     }
 
     @Test
@@ -113,7 +113,7 @@ class AvatarRepositoryTest {
         coEvery {
             avatarService.setAvatarCatching(any(), any(), any())
         } returns GravatarResult.Failure(ErrorType.Unknown())
-        coEvery { avatarStorage.markAvatarAsSelected(any(), any()) } returns Unit
+        coEvery { avatarStorage.selectAvatar(any(), any()) } returns Unit
 
         val result = avatarRepository.selectAvatar(email, avatar.imageId)
 
@@ -121,19 +121,19 @@ class AvatarRepositoryTest {
             GravatarResult.Failure<String, QuickEditorError>(QuickEditorError.Request(ErrorType.Unknown())),
             result,
         )
-        coVerify(exactly = 0) { avatarStorage.markAvatarAsSelected(email, avatar.imageId) }
+        coVerify(exactly = 0) { avatarStorage.selectAvatar(avatarId = avatar.imageId, email = email) }
     }
 
     @Test
     fun `given token stored when avatar selected succeeds then Success result`() = runTest {
         coEvery { avatarService.setAvatarCatching(any(), any(), any()) } returns GravatarResult.Success(Unit)
-        coEvery { avatarStorage.markAvatarAsSelected(email = email, avatarId = "avatarId") } returns Unit
+        coEvery { avatarStorage.selectAvatar(email = email, avatarId = "avatarId") } returns Unit
         initAvatarsFlowForEmail(email)
 
         val result = avatarRepository.selectAvatar(email, "avatarId")
 
         assertEquals(GravatarResult.Success<Unit, QuickEditorError>(Unit), result)
-        coVerify { avatarStorage.markAvatarAsSelected(email, "avatarId") }
+        coVerify { avatarStorage.selectAvatar(avatarId = "avatarId", email = email) }
     }
 
     @Test

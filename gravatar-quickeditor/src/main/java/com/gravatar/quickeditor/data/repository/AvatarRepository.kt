@@ -44,7 +44,7 @@ internal class AvatarRepository(
         token?.let {
             when (val result = avatarService.setAvatarCatching(email.hash().toString(), avatarId, token)) {
                 is GravatarResult.Success -> {
-                    avatarStorage.markAvatarAsSelected(email, avatarId)
+                    avatarStorage.selectAvatar(avatarId = avatarId, email = email)
                     GravatarResult.Success(Unit)
                 }
 
