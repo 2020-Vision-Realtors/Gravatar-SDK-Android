@@ -1,7 +1,6 @@
 package com.gravatar.quickeditor.ui.avatarpicker
 
 import android.net.Uri
-import com.gravatar.quickeditor.data.repository.EmailAvatars
 import com.gravatar.quickeditor.ui.editor.AvatarPickerContentLayout
 import com.gravatar.restapi.models.Avatar
 import com.gravatar.restapi.models.Profile

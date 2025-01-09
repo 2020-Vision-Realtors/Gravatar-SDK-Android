@@ -3,12 +3,12 @@ package com.gravatar.quickeditor.ui.avatarpicker
 import android.net.Uri
 import app.cash.turbine.test
 import com.gravatar.extensions.defaultProfile
+import com.gravatar.quickeditor.createAvatar
 import com.gravatar.quickeditor.data.DownloadManagerError
 import com.gravatar.quickeditor.data.FileUtils
 import com.gravatar.quickeditor.data.ImageDownloader
 import com.gravatar.quickeditor.data.models.QuickEditorError
 import com.gravatar.quickeditor.data.repository.AvatarRepository
-import com.gravatar.quickeditor.data.repository.EmailAvatars
 import com.gravatar.quickeditor.ui.CoroutineTestRule
 import com.gravatar.quickeditor.ui.editor.AvatarPickerContentLayout
 import com.gravatar.restapi.models.Avatar
@@ -25,6 +25,7 @@ import io.mockk.mockk
 import io.mockk.verify
 import junit.framework.TestCase.assertEquals
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
@@ -32,7 +33,6 @@ import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
 import java.io.File
-import java.net.URI
 
 @Suppress("LargeClass")
 class AvatarPickerViewModelTest {
@@ -45,6 +45,7 @@ class AvatarPickerViewModelTest {
     private val avatarRepository = mockk<AvatarRepository>()
     private val fileUtils = mockk<FileUtils>()
     private val imageDownloader = mockk<ImageDownloader>()
+    private val avatarsFlow = MutableSharedFlow<List<Avatar>>(replay = 1)
 
     private lateinit var viewModel: AvatarPickerViewModel
 
@@ -52,7 +53,7 @@ class AvatarPickerViewModelTest {
     private val avatarPickerContentLayout = AvatarPickerContentLayout.Horizontal
     private val profile = defaultProfile(hash = "hash", displayName = "Display name")
     private val avatars = listOf(createAvatar("1"), createAvatar("2"))
-    private val emailAvatars = EmailAvatars(emptyList(), null)
+    private val emptyEmailAvatars = emptyList<Avatar>().toEmailAvatars()
     private val errorMessage = "errorMessage"
     private val invalidRequest = QuickEditorError.Request(
         ErrorType.InvalidRequest(
@@ -66,13 +67,14 @@ class AvatarPickerViewModelTest {
     @Before
     fun setup() {
         coEvery { profileService.retrieveCatching(email) } returns GravatarResult.Failure(ErrorType.Unknown())
-        coEvery { avatarRepository.getAvatars(email) } returns GravatarResult.Success(emailAvatars)
+        coEvery { avatarRepository.refreshAvatars(email) } returns GravatarResult.Success(emptyList())
+        coEvery { avatarRepository.getAvatars(email) } returns avatarsFlow
     }
 
     @Test
     fun `given view model initialization when avatars request succeed then uiState is updated`() = runTest {
-        val emailAvatarsCopy = emailAvatars.copy(avatars = avatars, selectedAvatarId = "1")
-        coEvery { avatarRepository.getAvatars(email) } returns GravatarResult.Success(emailAvatarsCopy)
+        val avatars = listOf(createAvatar(id = "1", isSelected = true), createAvatar("2"))
+        coEvery { avatarRepository.refreshAvatars(email) } returns GravatarResult.Success(avatars)
 
         viewModel = initViewModel()
 
@@ -87,7 +89,7 @@ class AvatarPickerViewModelTest {
             assertEquals(
                 avatarPickerUiState.copy(
                     email = email,
-                    emailAvatars = emailAvatarsCopy,
+                    emailAvatars = avatars.toEmailAvatars(),
                     error = null,
                     profile = null,
                     scrollToIndex = 0,
@@ -100,7 +102,7 @@ class AvatarPickerViewModelTest {
 
     @Test
     fun `given view model initialization when avatars request fails then uiState is updated`() = runTest {
-        coEvery { avatarRepository.getAvatars(email) } returns GravatarResult.Failure(QuickEditorError.Unknown)
+        coEvery { avatarRepository.refreshAvatars(email) } returns GravatarResult.Failure(QuickEditorError.Unknown)
 
         viewModel = initViewModel()
 
@@ -134,7 +136,7 @@ class AvatarPickerViewModelTest {
             assertEquals(
                 avatarPickerUiState.copy(
                     email = email,
-                    emailAvatars = emailAvatars,
+                    emailAvatars = emptyEmailAvatars,
                     error = null,
                     profile = ComponentState.Loading,
                     nonSelectedAvatarAlertVisible = false,
@@ -144,7 +146,7 @@ class AvatarPickerViewModelTest {
             assertEquals(
                 avatarPickerUiState.copy(
                     email = email,
-                    emailAvatars = emailAvatars,
+                    emailAvatars = emptyEmailAvatars,
                     error = null,
                     profile = ComponentState.Loaded(profile),
                     nonSelectedAvatarAlertVisible = false,
@@ -166,7 +168,7 @@ class AvatarPickerViewModelTest {
             assertEquals(
                 avatarPickerUiState.copy(
                     email = email,
-                    emailAvatars = emailAvatars,
+                    emailAvatars = emptyEmailAvatars,
                     error = null,
                     profile = ComponentState.Loading,
                     nonSelectedAvatarAlertVisible = false,
@@ -176,7 +178,7 @@ class AvatarPickerViewModelTest {
             assertEquals(
                 avatarPickerUiState.copy(
                     email = email,
-                    emailAvatars = emailAvatars,
+                    emailAvatars = emptyEmailAvatars,
                     error = null,
                     profile = null,
                     nonSelectedAvatarAlertVisible = false,
@@ -189,8 +191,8 @@ class AvatarPickerViewModelTest {
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
     fun `given avatar when selected successful then uiState is updated`() = runTest {
-        val emailAvatarsCopy = emailAvatars.copy(avatars = avatars, selectedAvatarId = "1")
-        coEvery { avatarRepository.getAvatars(email) } returns GravatarResult.Success(emailAvatarsCopy)
+        val avatars = avatars.selectAvatarId("1")
+        coEvery { avatarRepository.refreshAvatars(email) } returns GravatarResult.Success(avatars)
         coEvery { profileService.retrieveCatching(email) } returns GravatarResult.Success(profile)
         coEvery { avatarRepository.selectAvatar(any(), any()) } returns GravatarResult.Success(Unit)
 
@@ -203,7 +205,7 @@ class AvatarPickerViewModelTest {
             viewModel.onEvent(AvatarPickerEvent.AvatarSelected(avatars.last()))
             val avatarPickerUiState = AvatarPickerUiState(
                 email = email,
-                emailAvatars = emailAvatarsCopy,
+                emailAvatars = avatars.toEmailAvatars(),
                 error = null,
                 profile = ComponentState.Loaded(profile),
                 selectingAvatarId = avatars.last().imageId,
@@ -217,9 +219,7 @@ class AvatarPickerViewModelTest {
             )
             assertEquals(
                 avatarPickerUiState.copy(
-                    emailAvatars = emailAvatarsCopy.copy(selectedAvatarId = avatars.last().imageId),
                     selectingAvatarId = null,
-                    scrollToIndex = 0,
                     avatarUpdates = 1,
                 ),
                 awaitItem(),
@@ -233,8 +233,8 @@ class AvatarPickerViewModelTest {
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
     fun `given avatar when selected failure then uiState is updated`() = runTest {
-        val emailAvatarsCopy = emailAvatars.copy(avatars = avatars, selectedAvatarId = "1")
-        coEvery { avatarRepository.getAvatars(email) } returns GravatarResult.Success(emailAvatarsCopy)
+        val avatars = avatars.selectAvatarId("1")
+        coEvery { avatarRepository.refreshAvatars(email) } returns GravatarResult.Success(avatars)
         coEvery { profileService.retrieveCatching(email) } returns GravatarResult.Success(profile)
         coEvery { avatarRepository.selectAvatar(any(), any()) } returns GravatarResult.Failure(QuickEditorError.Unknown)
 
@@ -247,7 +247,7 @@ class AvatarPickerViewModelTest {
             viewModel.onEvent(AvatarPickerEvent.AvatarSelected(avatars.last()))
             val avatarPickerUiState = AvatarPickerUiState(
                 email = email,
-                emailAvatars = emailAvatarsCopy,
+                emailAvatars = avatars.toEmailAvatars(),
                 error = null,
                 profile = ComponentState.Loaded(profile),
                 selectingAvatarId = avatars.last().imageId,
@@ -308,12 +308,12 @@ class AvatarPickerViewModelTest {
     @Test
     fun `given cropped image when upload successful then uiState is updated`() = runTest {
         val uri = mockk<Uri>()
-        val emailAvatarsCopy = emailAvatars.copy(avatars = avatars, selectedAvatarId = "1")
+        val avatars = avatars.selectAvatarId("1")
         every { fileUtils.deleteFile(any()) } returns Unit
         coEvery { profileService.retrieveCatching(email) } returns GravatarResult.Success(profile)
         val uploadedAvatar = createAvatar("3")
         coEvery { avatarRepository.uploadAvatar(any(), any()) } returns GravatarResult.Success(uploadedAvatar)
-        coEvery { avatarRepository.getAvatars(any()) } returns GravatarResult.Success(emailAvatarsCopy)
+        coEvery { avatarRepository.refreshAvatars(any()) } returns GravatarResult.Success(avatars)
 
         viewModel = initViewModel()
 
@@ -325,7 +325,7 @@ class AvatarPickerViewModelTest {
 
             val avatarPickerUiState = AvatarPickerUiState(
                 email = email,
-                emailAvatars = emailAvatarsCopy,
+                emailAvatars = avatars.toEmailAvatars(),
                 error = null,
                 profile = ComponentState.Loaded(profile),
                 selectingAvatarId = null,
@@ -339,69 +339,8 @@ class AvatarPickerViewModelTest {
             )
             assertEquals(
                 avatarPickerUiState.copy(
-                    emailAvatars = emailAvatarsCopy.copy(
-                        avatars = buildList {
-                            add(uploadedAvatar)
-                            addAll(emailAvatarsCopy.avatars)
-                        },
-                    ),
                     uploadingAvatar = null,
                     scrollToIndex = null,
-                ),
-                awaitItem(),
-            )
-        }
-        verify { fileUtils.deleteFile(uri) }
-    }
-
-    @OptIn(ExperimentalCoroutinesApi::class)
-    @Test
-    fun `given avatar returned when avatar with the same id then uiState is updated`() = runTest {
-        val uri = mockk<Uri>()
-        val emailAvatarsCopy = emailAvatars.copy(avatars = avatars, selectedAvatarId = "1")
-        every { fileUtils.deleteFile(any()) } returns Unit
-        coEvery { profileService.retrieveCatching(email) } returns GravatarResult.Success(profile)
-        val uploadedAvatar = createAvatar("2")
-        coEvery { avatarRepository.uploadAvatar(any(), any()) } returns GravatarResult.Success(uploadedAvatar)
-        coEvery { avatarRepository.getAvatars(any()) } returns GravatarResult.Success(emailAvatarsCopy)
-
-        viewModel = initViewModel()
-
-        advanceUntilIdle()
-
-        viewModel.uiState.test {
-            expectMostRecentItem()
-            viewModel.onEvent(AvatarPickerEvent.ImageCropped(uri))
-
-            assertEquals(
-                AvatarPickerUiState(
-                    email = email,
-                    emailAvatars = emailAvatarsCopy,
-                    error = null,
-                    profile = ComponentState.Loaded(profile),
-                    selectingAvatarId = null,
-                    uploadingAvatar = uri,
-                    scrollToIndex = 0,
-                    avatarPickerContentLayout = AvatarPickerContentLayout.Horizontal,
-                    failedUploads = emptySet(),
-                ),
-                awaitItem(),
-            )
-            assertEquals(
-                AvatarPickerUiState(
-                    email = email,
-                    emailAvatars = emailAvatarsCopy.copy(
-                        avatars = buildList {
-                            add(uploadedAvatar)
-                            add(createAvatar("1"))
-                        },
-                    ),
-                    error = null,
-                    profile = ComponentState.Loaded(profile),
-                    selectingAvatarId = null,
-                    uploadingAvatar = null,
-                    scrollToIndex = null,
-                    avatarPickerContentLayout = AvatarPickerContentLayout.Horizontal,
                 ),
                 awaitItem(),
             )
@@ -413,12 +352,12 @@ class AvatarPickerViewModelTest {
     @Test
     fun `given cropped image when upload failure then uiState is updated`() = runTest {
         val uri = mockk<Uri>()
-        val emailAvatarsCopy = emailAvatars.copy(avatars = avatars, selectedAvatarId = "1")
+        val avatars = avatars.selectAvatarId("1")
         every { fileUtils.deleteFile(any()) } returns Unit
         coEvery { profileService.retrieveCatching(email) } returns GravatarResult.Success(profile)
         coEvery { avatarRepository.uploadAvatar(any(), any()) } returns GravatarResult.Failure(invalidRequest)
 
-        coEvery { avatarRepository.getAvatars(any()) } returns GravatarResult.Success(emailAvatarsCopy)
+        coEvery { avatarRepository.refreshAvatars(any()) } returns GravatarResult.Success(avatars)
 
         viewModel = initViewModel()
 
@@ -430,7 +369,7 @@ class AvatarPickerViewModelTest {
 
             val avatarPickerUiState = AvatarPickerUiState(
                 email = email,
-                emailAvatars = emailAvatarsCopy,
+                emailAvatars = avatars.toEmailAvatars(),
                 error = null,
                 profile = ComponentState.Loaded(profile),
                 selectingAvatarId = null,
@@ -458,13 +397,13 @@ class AvatarPickerViewModelTest {
     @Test
     fun `given cropped image when upload successful then scrollToIndex updated`() = runTest {
         val uri = mockk<Uri>()
-        val emailAvatarsCopy = emailAvatars.copy(avatars = avatars, selectedAvatarId = "2")
+        val avatars = avatars.selectAvatarId("2")
         every { fileUtils.deleteFile(any()) } returns Unit
         coEvery { profileService.retrieveCatching(email) } returns GravatarResult.Success(profile)
         coEvery {
             avatarRepository.uploadAvatar(any(), any())
         } returns GravatarResult.Success(createAvatar("3"))
-        coEvery { avatarRepository.getAvatars(any()) } returns GravatarResult.Success(emailAvatarsCopy)
+        coEvery { avatarRepository.refreshAvatars(any()) } returns GravatarResult.Success(avatars)
 
         viewModel = initViewModel()
 
@@ -492,13 +431,13 @@ class AvatarPickerViewModelTest {
     @Test
     fun `given cropped image when upload failed then scrollToIndex updated`() = runTest {
         val uri = mockk<Uri>()
-        val emailAvatarsCopy = emailAvatars.copy(avatars = avatars, selectedAvatarId = "2")
+        val avatars = avatars.selectAvatarId("2")
         every { fileUtils.deleteFile(any()) } returns Unit
         coEvery { profileService.retrieveCatching(email) } returns GravatarResult.Success(profile)
         coEvery {
             avatarRepository.uploadAvatar(any(), any())
         } returns GravatarResult.Failure(QuickEditorError.Request(ErrorType.Server))
-        coEvery { avatarRepository.getAvatars(any()) } returns GravatarResult.Success(emailAvatarsCopy)
+        coEvery { avatarRepository.refreshAvatars(any()) } returns GravatarResult.Success(avatars)
 
         viewModel = initViewModel()
 
@@ -527,10 +466,10 @@ class AvatarPickerViewModelTest {
     fun `given multiple failed uploads when upload successful then uiState is updated`() = runTest {
         val uriOne = mockk<Uri>()
         val uriTwo = mockk<Uri>()
-        val emailAvatarsCopy = emailAvatars.copy(avatars = listOf(createAvatar("3")), selectedAvatarId = "3")
+        val avatars = listOf(createAvatar("3", isSelected = true))
         every { fileUtils.deleteFile(any()) } returns Unit
         coEvery { profileService.retrieveCatching(email) } returns GravatarResult.Success(profile)
-        coEvery { avatarRepository.getAvatars(any()) } returns GravatarResult.Success(emailAvatarsCopy)
+        coEvery { avatarRepository.refreshAvatars(any()) } returns GravatarResult.Success(avatars)
         coEvery { avatarRepository.uploadAvatar(any(), any()) } returns GravatarResult.Failure(invalidRequest)
 
         viewModel = initViewModel()
@@ -549,7 +488,7 @@ class AvatarPickerViewModelTest {
             viewModel.onEvent(AvatarPickerEvent.ImageCropped(uriTwo))
             val avatarPickerUiState = AvatarPickerUiState(
                 email = email,
-                emailAvatars = emailAvatarsCopy,
+                emailAvatars = avatars.toEmailAvatars(),
                 error = null,
                 profile = ComponentState.Loaded(profile),
                 selectingAvatarId = null,
@@ -566,7 +505,6 @@ class AvatarPickerViewModelTest {
             )
             assertEquals(
                 avatarPickerUiState.copy(
-                    emailAvatars = emailAvatarsCopy.copy(avatars = listOf(createAvatar("1"), createAvatar("3"))),
                     uploadingAvatar = null,
                     scrollToIndex = null,
                 ),
@@ -590,10 +528,10 @@ class AvatarPickerViewModelTest {
     @Test
     fun `given failed avatar upload when FailedAvatarTapped then UiState updated`() = runTest {
         val uri = mockk<Uri>()
-        val identityAvatarsCopy = emailAvatars.copy(avatars = avatars, selectedAvatarId = "1")
+        val avatars = avatars.selectAvatarId("1")
         coEvery { profileService.retrieveCatching(email) } returns GravatarResult.Success(profile)
         coEvery { avatarRepository.uploadAvatar(any(), any()) } returns GravatarResult.Failure(invalidRequest)
-        coEvery { avatarRepository.getAvatars(any()) } returns GravatarResult.Success(identityAvatarsCopy)
+        coEvery { avatarRepository.refreshAvatars(any()) } returns GravatarResult.Success(avatars)
 
         viewModel = initViewModel()
         viewModel.onEvent(AvatarPickerEvent.ImageCropped(uri))
@@ -612,12 +550,12 @@ class AvatarPickerViewModelTest {
     @Test
     fun `given failed avatar upload dialog shown when FailedAvatarDismissed then UiState updated`() = runTest {
         val uri = mockk<Uri>()
-        val identityAvatarsCopy = emailAvatars.copy(avatars = avatars, selectedAvatarId = "1")
+        val avatars = avatars.selectAvatarId("1")
         coEvery { profileService.retrieveCatching(email) } returns GravatarResult.Success(profile)
         coEvery {
             avatarRepository.uploadAvatar(any(), any())
         } returns GravatarResult.Failure(QuickEditorError.Request(ErrorType.Server))
-        coEvery { avatarRepository.getAvatars(any()) } returns GravatarResult.Success(identityAvatarsCopy)
+        coEvery { avatarRepository.refreshAvatars(any()) } returns GravatarResult.Success(avatars)
 
         viewModel = initViewModel()
         viewModel.onEvent(AvatarPickerEvent.ImageCropped(uri))
@@ -639,10 +577,10 @@ class AvatarPickerViewModelTest {
     @Test
     fun `given failed avatar upload dialog shown when FailedAvatarDialogDismissed then UiState updated`() = runTest {
         val uri = mockk<Uri>()
-        val identityAvatarsCopy = emailAvatars.copy(avatars = avatars, selectedAvatarId = "1")
+        val avatars = avatars.selectAvatarId("1")
         coEvery { profileService.retrieveCatching(email) } returns GravatarResult.Success(profile)
         coEvery { avatarRepository.uploadAvatar(any(), any()) } returns GravatarResult.Failure(invalidRequest)
-        coEvery { avatarRepository.getAvatars(any()) } returns GravatarResult.Success(identityAvatarsCopy)
+        coEvery { avatarRepository.refreshAvatars(any()) } returns GravatarResult.Success(avatars)
 
         viewModel = initViewModel()
         viewModel.onEvent(AvatarPickerEvent.ImageCropped(uri))
@@ -664,12 +602,12 @@ class AvatarPickerViewModelTest {
     @Test
     fun `given failed avatar upload dialog shown when ImageCropped then UiState updated`() = runTest {
         val uri = mockk<Uri>()
-        val identityAvatarsCopy = emailAvatars.copy(avatars = avatars, selectedAvatarId = "1")
+        val avatars = avatars.selectAvatarId("1")
         coEvery { profileService.retrieveCatching(email) } returns GravatarResult.Success(profile)
         coEvery {
             avatarRepository.uploadAvatar(any(), any())
         } returns GravatarResult.Failure(QuickEditorError.Request(ErrorType.Server))
-        coEvery { avatarRepository.getAvatars(any()) } returns GravatarResult.Success(identityAvatarsCopy)
+        coEvery { avatarRepository.refreshAvatars(any()) } returns GravatarResult.Success(avatars)
 
         viewModel = initViewModel()
         viewModel.onEvent(AvatarPickerEvent.ImageCropped(uri))
@@ -693,7 +631,7 @@ class AvatarPickerViewModelTest {
     @Test
     fun `given profile loaded when refresh then fetch profile not called`() = runTest {
         coEvery { profileService.retrieveCatching(email) } returns GravatarResult.Success(profile)
-        coEvery { avatarRepository.getAvatars(email) } returns GravatarResult.Failure(QuickEditorError.Unknown)
+        coEvery { avatarRepository.refreshAvatars(email) } returns GravatarResult.Failure(QuickEditorError.Unknown)
         viewModel = initViewModel()
         advanceUntilIdle()
 
@@ -708,13 +646,10 @@ class AvatarPickerViewModelTest {
     @Test
     fun `given no avatar selected when avatar upload success then avatar is selected - uiState is updated`() = runTest {
         val uriOne = mockk<Uri>()
-        val emailAvatarsCopy = emailAvatars.copy(
-            avatars = listOf(createAvatar("3", isSelected = false)),
-            selectedAvatarId = null,
-        )
+        val avatars = listOf(createAvatar("3", isSelected = false))
         every { fileUtils.deleteFile(any()) } returns Unit
         coEvery { profileService.retrieveCatching(email) } returns GravatarResult.Success(profile)
-        coEvery { avatarRepository.getAvatars(any()) } returns GravatarResult.Success(emailAvatarsCopy)
+        coEvery { avatarRepository.refreshAvatars(any()) } returns GravatarResult.Success(avatars)
         val uploadedAvatar = createAvatar(id = "1", isSelected = true)
         coEvery { avatarRepository.uploadAvatar(any(), any()) } returns GravatarResult.Success(uploadedAvatar)
 
@@ -725,16 +660,12 @@ class AvatarPickerViewModelTest {
         viewModel.uiState.test {
             expectMostRecentItem()
 
-            val emailAvatarsUpdated = emailAvatars.copy(
-                avatars = listOf(createAvatar("1", isSelected = true), createAvatar("3", isSelected = false)),
-                selectedAvatarId = "1",
-            )
             viewModel.onEvent(AvatarPickerEvent.ImageCropped(uriOne))
 
             // State before upload starts
             var avatarPickerUiState = AvatarPickerUiState(
                 email = email,
-                emailAvatars = emailAvatarsCopy,
+                emailAvatars = avatars.toEmailAvatars(),
                 error = null,
                 profile = ComponentState.Loaded(profile),
                 selectingAvatarId = null,
@@ -749,9 +680,10 @@ class AvatarPickerViewModelTest {
                 awaitItem(),
             )
             // State produced before finishing uploadAvatar
+            // Note that emailAvatars will be updated though the observer when the repository emits the new value
             avatarPickerUiState = AvatarPickerUiState(
                 email = email,
-                emailAvatars = emailAvatarsUpdated,
+                emailAvatars = avatars.toEmailAvatars(),
                 error = null,
                 profile = ComponentState.Loaded(profile),
                 selectingAvatarId = null,
@@ -760,23 +692,6 @@ class AvatarPickerViewModelTest {
                 avatarPickerContentLayout = avatarPickerContentLayout,
                 avatarUpdates = 1,
                 nonSelectedAvatarAlertVisible = true,
-            )
-            assertEquals(
-                avatarPickerUiState,
-                awaitItem(),
-            )
-            // State produced (in reaction of the emailAvatars change) to update the avatar non selected alert
-            avatarPickerUiState = AvatarPickerUiState(
-                email = email,
-                emailAvatars = emailAvatarsUpdated,
-                error = null,
-                profile = ComponentState.Loaded(profile),
-                selectingAvatarId = null,
-                uploadingAvatar = null,
-                scrollToIndex = null,
-                avatarPickerContentLayout = avatarPickerContentLayout,
-                avatarUpdates = 1,
-                nonSelectedAvatarAlertVisible = false,
             )
             assertEquals(
                 avatarPickerUiState,
@@ -791,8 +706,8 @@ class AvatarPickerViewModelTest {
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
     fun `given selected avatar when delete successful then uiState is updated`() = runTest {
-        val emailAvatarsCopy = emailAvatars.copy(avatars = avatars, selectedAvatarId = avatars.first().imageId)
-        coEvery { avatarRepository.getAvatars(email) } returns GravatarResult.Success(emailAvatarsCopy)
+        val avatars = avatars.selectAvatarId(avatars.first().imageId)
+        coEvery { avatarRepository.refreshAvatars(email) } returns GravatarResult.Success(avatars)
         coEvery { profileService.retrieveCatching(email) } returns GravatarResult.Success(profile)
         coEvery { avatarRepository.deleteAvatar(any(), any()) } returns GravatarResult.Success(Unit)
 
@@ -806,7 +721,7 @@ class AvatarPickerViewModelTest {
             viewModel.onEvent(AvatarPickerEvent.AvatarDeleteSelected(avatarToDelete.imageId))
             var avatarPickerUiState = AvatarPickerUiState(
                 email = email,
-                emailAvatars = emailAvatarsCopy.copy(avatars = avatars.minus(avatarToDelete), selectedAvatarId = null),
+                emailAvatars = avatars.minus(avatarToDelete).toEmailAvatars(),
                 error = null,
                 profile = ComponentState.Loaded(profile),
                 avatarPickerContentLayout = avatarPickerContentLayout,
@@ -842,8 +757,8 @@ class AvatarPickerViewModelTest {
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
     fun `given non selected avatar when delete successful then uiState is updated`() = runTest {
-        val emailAvatarsCopy = emailAvatars.copy(avatars = avatars, selectedAvatarId = avatars.first().imageId)
-        coEvery { avatarRepository.getAvatars(email) } returns GravatarResult.Success(emailAvatarsCopy)
+        val avatars = avatars.selectAvatarId(avatars.first().imageId)
+        coEvery { avatarRepository.refreshAvatars(email) } returns GravatarResult.Success(avatars)
         coEvery { profileService.retrieveCatching(email) } returns GravatarResult.Success(profile)
         coEvery { avatarRepository.deleteAvatar(any(), any()) } returns GravatarResult.Success(Unit)
 
@@ -857,10 +772,7 @@ class AvatarPickerViewModelTest {
             viewModel.onEvent(AvatarPickerEvent.AvatarDeleteSelected(avatarToDelete.imageId))
             val avatarPickerUiState = AvatarPickerUiState(
                 email = email,
-                emailAvatars = emailAvatarsCopy.copy(
-                    avatars = avatars.minus(avatarToDelete),
-                    selectedAvatarId = avatars.first().imageId,
-                ),
+                emailAvatars = avatars.minus(avatarToDelete).toEmailAvatars(),
                 error = null,
                 profile = ComponentState.Loaded(profile),
                 avatarPickerContentLayout = avatarPickerContentLayout,
@@ -881,8 +793,8 @@ class AvatarPickerViewModelTest {
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
     fun `given selected avatar when delete fails then uiState is updated`() = runTest {
-        val emailAvatarsCopy = emailAvatars.copy(avatars = avatars, selectedAvatarId = avatars.first().imageId)
-        coEvery { avatarRepository.getAvatars(email) } returns GravatarResult.Success(emailAvatarsCopy)
+        val avatars = avatars.selectAvatarId(avatars.first().imageId)
+        coEvery { avatarRepository.refreshAvatars(email) } returns GravatarResult.Success(avatars)
         coEvery { profileService.retrieveCatching(email) } returns GravatarResult.Success(profile)
         coEvery { avatarRepository.deleteAvatar(any(), any()) } returns GravatarResult.Failure(QuickEditorError.Unknown)
 
@@ -892,14 +804,14 @@ class AvatarPickerViewModelTest {
 
         viewModel.uiState.test {
             expectMostRecentItem()
-            val avatarToDelete = avatars.first()
+            val avatarToDelete = this@AvatarPickerViewModelTest.avatars.first()
             viewModel.onEvent(AvatarPickerEvent.AvatarDeleteSelected(avatarToDelete.imageId))
 
             awaitItem()
 
             val avatarPickerUiState = AvatarPickerUiState(
                 email = email,
-                emailAvatars = emailAvatarsCopy.copy(avatars = avatars, selectedAvatarId = avatars.first().imageId),
+                emailAvatars = avatars.toEmailAvatars(),
                 error = null,
                 profile = ComponentState.Loaded(profile),
                 avatarPickerContentLayout = avatarPickerContentLayout,
@@ -920,8 +832,8 @@ class AvatarPickerViewModelTest {
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
     fun `given non selected avatar when delete fails then uiState is updated`() = runTest {
-        val emailAvatarsCopy = emailAvatars.copy(avatars = avatars, selectedAvatarId = avatars.first().imageId)
-        coEvery { avatarRepository.getAvatars(email) } returns GravatarResult.Success(emailAvatarsCopy)
+        val avatars = avatars.selectAvatarId(avatars.first().imageId)
+        coEvery { avatarRepository.refreshAvatars(email) } returns GravatarResult.Success(avatars)
         coEvery { profileService.retrieveCatching(email) } returns GravatarResult.Success(profile)
         coEvery { avatarRepository.deleteAvatar(any(), any()) } returns GravatarResult.Failure(QuickEditorError.Unknown)
 
@@ -931,14 +843,14 @@ class AvatarPickerViewModelTest {
 
         viewModel.uiState.test {
             expectMostRecentItem()
-            val avatarToDelete = avatars.last() // Non selected avatar
+            val avatarToDelete = this@AvatarPickerViewModelTest.avatars.last() // Non selected avatar
             viewModel.onEvent(AvatarPickerEvent.AvatarDeleteSelected(avatarToDelete.imageId))
 
             awaitItem()
 
             val avatarPickerUiState = AvatarPickerUiState(
                 email = email,
-                emailAvatars = emailAvatarsCopy.copy(avatars = avatars, selectedAvatarId = avatars.first().imageId),
+                emailAvatars = avatars.toEmailAvatars(),
                 error = null,
                 profile = ComponentState.Loaded(profile),
                 avatarPickerContentLayout = avatarPickerContentLayout,
@@ -958,13 +870,13 @@ class AvatarPickerViewModelTest {
 
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
+    @Suppress("LongMethod")
     fun `given alert banner dismissed when avatar upload successful then nonSelectedAvatarAlertVisible is hidden`() =
         runTest {
             val uri = mockk<Uri>()
-            val emailAvatarsCopy = emailAvatars.copy(avatars = avatars, selectedAvatarId = null)
             every { fileUtils.deleteFile(any()) } returns Unit
             coEvery { profileService.retrieveCatching(email) } returns GravatarResult.Success(profile)
-            coEvery { avatarRepository.getAvatars(any()) } returns GravatarResult.Success(emailAvatarsCopy)
+            coEvery { avatarRepository.refreshAvatars(any()) } returns GravatarResult.Success(avatars)
             val uploadedAvatar = createAvatar("3", isSelected = true)
             coEvery { avatarRepository.uploadAvatar(any(), any()) } returns GravatarResult.Success(uploadedAvatar)
 
@@ -979,7 +891,7 @@ class AvatarPickerViewModelTest {
 
                 val avatarPickerUiState = AvatarPickerUiState(
                     email = email,
-                    emailAvatars = emailAvatarsCopy,
+                    emailAvatars = avatars.toEmailAvatars(),
                     error = null,
                     profile = ComponentState.Loaded(profile),
                     selectingAvatarId = null,
@@ -994,13 +906,21 @@ class AvatarPickerViewModelTest {
                 )
                 assertEquals(
                     avatarPickerUiState.copy(
-                        emailAvatars = emailAvatarsCopy.copy(
-                            avatars = buildList {
-                                add(uploadedAvatar)
-                                addAll(emailAvatarsCopy.avatars)
-                            },
-                            selectedAvatarId = "3",
-                        ),
+                        uploadingAvatar = null,
+                        scrollToIndex = null,
+                        avatarUpdates = 1,
+                    ),
+                    awaitItem(),
+                )
+                // Avatars are updated by the avatars flow in the repository
+                val updatedAvatars = buildList {
+                    add(uploadedAvatar)
+                    addAll(avatars)
+                }
+                avatarsFlow.emit(updatedAvatars)
+                assertEquals(
+                    avatarPickerUiState.copy(
+                        emailAvatars = updatedAvatars.toEmailAvatars(),
                         uploadingAvatar = null,
                         scrollToIndex = null,
                         avatarUpdates = 1,
@@ -1017,8 +937,8 @@ class AvatarPickerViewModelTest {
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
     fun `given avatar already deleted when delete returns 404 then uiState is updated`() = runTest {
-        val emailAvatarsCopy = emailAvatars.copy(avatars = avatars, selectedAvatarId = avatars.first().imageId)
-        coEvery { avatarRepository.getAvatars(email) } returns GravatarResult.Success(emailAvatarsCopy)
+        val avatars = avatars.selectAvatarId(avatars.first().imageId)
+        coEvery { avatarRepository.refreshAvatars(email) } returns GravatarResult.Success(avatars)
         coEvery { profileService.retrieveCatching(email) } returns GravatarResult.Success(profile)
         coEvery { avatarRepository.deleteAvatar(any(), any()) } returns
             GravatarResult.Failure(QuickEditorError.Request(ErrorType.NotFound))
@@ -1033,7 +953,7 @@ class AvatarPickerViewModelTest {
             viewModel.onEvent(AvatarPickerEvent.AvatarDeleteSelected(avatarToDelete.imageId))
             var avatarPickerUiState = AvatarPickerUiState(
                 email = email,
-                emailAvatars = emailAvatarsCopy.copy(avatars = avatars.minus(avatarToDelete), selectedAvatarId = null),
+                emailAvatars = avatars.minus(avatarToDelete).toEmailAvatars(),
                 error = null,
                 profile = ComponentState.Loaded(profile),
                 avatarPickerContentLayout = avatarPickerContentLayout,
@@ -1059,8 +979,8 @@ class AvatarPickerViewModelTest {
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
     fun `given avatar when download queued then AvatarDownloadStarted sent`() = runTest {
-        val emailAvatarsCopy = emailAvatars.copy(avatars = avatars, selectedAvatarId = "1")
-        coEvery { avatarRepository.getAvatars(email) } returns GravatarResult.Success(emailAvatarsCopy)
+        val avatars = avatars.selectAvatarId("1")
+        coEvery { avatarRepository.refreshAvatars(email) } returns GravatarResult.Success(avatars)
         coEvery { profileService.retrieveCatching(email) } returns GravatarResult.Success(profile)
         coEvery { avatarRepository.selectAvatar(any(), any()) } returns GravatarResult.Success(Unit)
         coEvery { imageDownloader.downloadImage(any()) } returns GravatarResult.Success(Unit)
@@ -1069,7 +989,7 @@ class AvatarPickerViewModelTest {
 
         advanceUntilIdle()
 
-        viewModel.onEvent(AvatarPickerEvent.DownloadAvatarTapped(avatars.first()))
+        viewModel.onEvent(AvatarPickerEvent.DownloadAvatarTapped(this@AvatarPickerViewModelTest.avatars.first()))
 
         viewModel.actions.test {
             assertEquals(AvatarPickerAction.AvatarDownloadStarted, awaitItem())
@@ -1079,8 +999,8 @@ class AvatarPickerViewModelTest {
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
     fun `given avatar when download manager disabled then uiState updated`() = runTest {
-        val emailAvatarsCopy = emailAvatars.copy(avatars = avatars, selectedAvatarId = "1")
-        coEvery { avatarRepository.getAvatars(email) } returns GravatarResult.Success(emailAvatarsCopy)
+        val emailAvatarsCopy = avatars.selectAvatarId("1")
+        coEvery { avatarRepository.refreshAvatars(email) } returns GravatarResult.Success(emailAvatarsCopy)
         coEvery { profileService.retrieveCatching(email) } returns GravatarResult.Success(profile)
         coEvery { avatarRepository.selectAvatar(any(), any()) } returns GravatarResult.Success(Unit)
         coEvery {
@@ -1101,8 +1021,8 @@ class AvatarPickerViewModelTest {
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
     fun `given avatar when download manager not available then DownloadManagerNotAvailable sent`() = runTest {
-        val emailAvatarsCopy = emailAvatars.copy(avatars = avatars, selectedAvatarId = "1")
-        coEvery { avatarRepository.getAvatars(email) } returns GravatarResult.Success(emailAvatarsCopy)
+        val avatars = avatars.selectAvatarId("1")
+        coEvery { avatarRepository.refreshAvatars(email) } returns GravatarResult.Success(avatars)
         coEvery { profileService.retrieveCatching(email) } returns GravatarResult.Success(profile)
         coEvery { avatarRepository.selectAvatar(any(), any()) } returns GravatarResult.Success(Unit)
         coEvery {
@@ -1125,9 +1045,9 @@ class AvatarPickerViewModelTest {
     fun `given avatarId when updateAvatar succeeds then uiState is updated`() = runTest {
         val avatarId = "avatarId"
         val rating = Avatar.Rating.PG
-        val oldAvatar = createAvatar(avatarId)
-        val emailAvatarsCopy = emailAvatars.copy(avatars = listOf(oldAvatar), selectedAvatarId = avatarId)
-        coEvery { avatarRepository.getAvatars(email) } returns GravatarResult.Success(emailAvatarsCopy)
+        val oldAvatar = createAvatar(avatarId, isSelected = true)
+        val avatars = listOf(oldAvatar)
+        coEvery { avatarRepository.refreshAvatars(email) } returns GravatarResult.Success(avatars)
         coEvery { profileService.retrieveCatching(email) } returns GravatarResult.Success(profile)
         val updatedAvatar = oldAvatar.copy(rating)
         coEvery {
@@ -1141,11 +1061,10 @@ class AvatarPickerViewModelTest {
         viewModel.uiState.test {
             expectMostRecentItem()
             viewModel.onEvent(AvatarPickerEvent.AvatarRatingSelected(avatarId, rating))
-            val updatedEmailAvatars = emailAvatarsCopy.copy(avatars = listOf(updatedAvatar))
             assertEquals(
                 AvatarPickerUiState(
                     email = email,
-                    emailAvatars = updatedEmailAvatars,
+                    emailAvatars = listOf(updatedAvatar).toEmailAvatars(),
                     profile = ComponentState.Loaded(profile),
                     avatarPickerContentLayout = avatarPickerContentLayout,
                     scrollToIndex = 0,
@@ -1164,8 +1083,8 @@ class AvatarPickerViewModelTest {
         val avatarId = "avatarId"
         val rating = Avatar.Rating.PG
         val oldAvatar = createAvatar(avatarId, isSelected = true)
-        val emailAvatarsCopy = emailAvatars.copy(avatars = listOf(oldAvatar), selectedAvatarId = avatarId)
-        coEvery { avatarRepository.getAvatars(email) } returns GravatarResult.Success(emailAvatarsCopy)
+        val avatars = listOf(oldAvatar)
+        coEvery { avatarRepository.refreshAvatars(email) } returns GravatarResult.Success(avatars)
         coEvery { profileService.retrieveCatching(email) } returns GravatarResult.Success(profile)
         coEvery {
             avatarRepository.updateAvatar(email, avatarId, rating)
@@ -1179,11 +1098,10 @@ class AvatarPickerViewModelTest {
             expectMostRecentItem()
             viewModel.onEvent(AvatarPickerEvent.AvatarRatingSelected(avatarId, rating))
             val updatedAvatar = oldAvatar.copy(rating)
-            val updatedEmailAvatars = emailAvatarsCopy.copy(avatars = listOf(updatedAvatar))
             assertEquals(
                 AvatarPickerUiState(
                     email = email,
-                    emailAvatars = updatedEmailAvatars,
+                    emailAvatars = listOf(updatedAvatar).toEmailAvatars(),
                     profile = ComponentState.Loaded(profile),
                     avatarPickerContentLayout = avatarPickerContentLayout,
                     scrollToIndex = 0,
@@ -1193,7 +1111,7 @@ class AvatarPickerViewModelTest {
             assertEquals(
                 AvatarPickerUiState(
                     email = email,
-                    emailAvatars = emailAvatarsCopy,
+                    emailAvatars = avatars.toEmailAvatars(),
                     profile = ComponentState.Loaded(profile),
                     avatarPickerContentLayout = avatarPickerContentLayout,
                     scrollToIndex = 0,
@@ -1213,8 +1131,8 @@ class AvatarPickerViewModelTest {
         val rating = Avatar.Rating.PG
         val altText = "New Alt"
         val oldAvatar = createAvatar(avatarId, isSelected = true, rating = rating, altText = altText)
-        val emailAvatarsCopy = emailAvatars.copy(avatars = listOf(oldAvatar), selectedAvatarId = avatarId)
-        coEvery { avatarRepository.getAvatars(email) } returns GravatarResult.Success(emailAvatarsCopy)
+        val avatars = listOf(oldAvatar)
+        coEvery { avatarRepository.refreshAvatars(email) } returns GravatarResult.Success(avatars)
         coEvery { profileService.retrieveCatching(email) } returns GravatarResult.Success(profile)
         coEvery {
             avatarRepository.updateAvatar(email, avatarId, rating)
@@ -1251,9 +1169,9 @@ class AvatarPickerViewModelTest {
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test
     fun `given AvatarAltTextTapped event when received then LaunchAvatarAltText action is launched`() = runTest {
-        val avatar = createAvatar("1")
-        val emailAvatarsCopy = emailAvatars.copy(avatars = listOf(avatar), selectedAvatarId = avatar.imageId)
-        coEvery { avatarRepository.getAvatars(email) } returns GravatarResult.Success(emailAvatarsCopy)
+        val avatar = createAvatar("1", isSelected = true)
+        val avatars = listOf(avatar)
+        coEvery { avatarRepository.refreshAvatars(email) } returns GravatarResult.Success(avatars)
         coEvery { profileService.retrieveCatching(email) } returns GravatarResult.Success(profile)
 
         viewModel = initViewModel()
@@ -1269,7 +1187,7 @@ class AvatarPickerViewModelTest {
             assertEquals(
                 AvatarPickerUiState(
                     email = email,
-                    emailAvatars = emailAvatarsCopy,
+                    emailAvatars = avatars.toEmailAvatars(),
                     profile = ComponentState.Loaded(profile),
                     avatarPickerContentLayout = avatarPickerContentLayout,
                     scrollToIndex = 0,
@@ -1277,6 +1195,10 @@ class AvatarPickerViewModelTest {
                 awaitItem(),
             )
         }
+    }
+
+    private fun List<Avatar>.selectAvatarId(avatarId: String) = map {
+        it.copy(selected = it.imageId == avatarId)
     }
 
     private fun initViewModel(handleExpiredSession: Boolean = true) = AvatarPickerViewModel(
@@ -1288,18 +1210,4 @@ class AvatarPickerViewModelTest {
         fileUtils = fileUtils,
         imageDownloader = imageDownloader,
     )
-
-    private fun createAvatar(
-        id: String,
-        isSelected: Boolean? = null,
-        rating: Avatar.Rating = Avatar.Rating.G,
-        altText: String = "alt",
-    ) = Avatar {
-        imageUrl = URI.create("https://gravatar.com/avatar/test")
-        imageId = id
-        this.rating = rating
-        this.altText = altText
-        updatedDate = ""
-        selected = isSelected
-    }
 }

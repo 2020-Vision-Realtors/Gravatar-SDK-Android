@@ -51,6 +51,7 @@ internal class AvatarPickerViewModel(
     init {
         refresh()
         nonAvatarSelectedAlertObserver()
+        collectAvatars()
     }
 
     fun onEvent(event: AvatarPickerEvent) {
@@ -191,9 +192,7 @@ internal class AvatarPickerViewModel(
                 when (avatarRepository.selectAvatar(email, avatarId)) {
                     is GravatarResult.Success -> {
                         _uiState.update { currentState ->
-                            val emailAvatars = currentState.emailAvatars?.copy(selectedAvatarId = avatarId)
                             currentState.copy(
-                                emailAvatars = emailAvatars,
                                 selectingAvatarId = null,
                                 avatarUpdates = currentState.avatarUpdates.inc(),
                             )
@@ -237,22 +236,8 @@ internal class AvatarPickerViewModel(
                         _actions.send(AvatarPickerAction.AvatarSelected)
                     }
                     _uiState.update { currentState ->
-                        val emailAvatars = currentState.emailAvatars?.copy(
-                            avatars = buildList {
-                                add(avatar)
-                                addAll(
-                                    currentState.emailAvatars.avatars.filter { it.imageId != avatar.imageId },
-                                )
-                            },
-                            selectedAvatarId = if (avatar.selected == true) {
-                                avatar.imageId
-                            } else {
-                                currentState.emailAvatars.selectedAvatarId
-                            },
-                        )
                         currentState.copy(
                             uploadingAvatar = null,
-                            emailAvatars = emailAvatars,
                             scrollToIndex = null,
                             avatarUpdates = if (avatar.selected == true) {
                                 currentState.avatarUpdates.inc()
@@ -311,10 +296,10 @@ internal class AvatarPickerViewModel(
         if (showLoading) {
             _uiState.update { currentState -> currentState.copy(isLoading = true) }
         }
-        when (val result = avatarRepository.getAvatars(email)) {
+        when (val result = avatarRepository.refreshAvatars(email)) {
             is GravatarResult.Success -> {
                 _uiState.update { currentState ->
-                    val emailAvatars = result.value
+                    val emailAvatars = result.value.toEmailAvatars()
                     currentState.copy(
                         emailAvatars = emailAvatars,
                         scrollToIndex = if (scrollToSelected && emailAvatars.avatars.isNotEmpty()) {
@@ -435,6 +420,16 @@ internal class AvatarPickerViewModel(
             .launchIn(viewModelScope)
     }
 
+    private fun collectAvatars() {
+        viewModelScope.launch {
+            avatarRepository.getAvatars(email).collect { avatars ->
+                _uiState.update {
+                    it.copy(emailAvatars = avatars.toEmailAvatars())
+                }
+            }
+        }
+    }
+
     private fun launchAltTextEditor(avatarId: String) {
         viewModelScope.launch {
             _uiState.value.emailAvatars?.avatars?.firstOrNull { it.imageId == avatarId }?.let { avatar ->
@@ -483,13 +478,25 @@ private inline fun <T> List<T>.indexOfFirstOrNull(predicate: (T) -> Boolean): In
     return if (index == -1) null else index
 }
 
-internal fun Avatar.copy(rating: Avatar.Rating? = null): Avatar {
+internal fun Avatar.copy(rating: Avatar.Rating? = null, altText: String? = null, selected: Boolean? = null): Avatar {
     return Avatar {
         imageId = this@copy.imageId
         imageUrl = this@copy.imageUrl
         updatedDate = this@copy.updatedDate
-        selected = this@copy.selected
-        this.altText = this@copy.altText
+        this.selected = selected ?: this@copy.selected
+        this.altText = altText ?: this@copy.altText
         this.rating = rating ?: this@copy.rating
     }
+}
+
+internal data class EmailAvatars(
+    val avatars: List<Avatar>,
+    val selectedAvatarId: String?,
+)
+
+internal fun List<Avatar>.toEmailAvatars(): EmailAvatars {
+    return EmailAvatars(
+        avatars = this,
+        selectedAvatarId = firstOrNull { avatar -> avatar.selected == true }?.imageId,
+    )
 }
