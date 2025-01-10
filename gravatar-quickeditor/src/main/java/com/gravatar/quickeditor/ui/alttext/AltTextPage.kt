@@ -38,7 +38,6 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
-import com.gravatar.GravatarConstants
 import com.gravatar.quickeditor.R
 import com.gravatar.quickeditor.ui.components.QEButton
 import com.gravatar.quickeditor.ui.components.QESectionTitle
@@ -50,6 +49,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.net.URL
+
+/** Gravatar Alt Text help URL */
+private const val GRAVATAR_ALT_TEXT_HELP_URL: String =
+    "https://support.gravatar.com/profiles/avatars/#add-alt-text-to-avatars"
 
 @Composable
 internal fun AltTextPage(
@@ -147,7 +150,7 @@ internal fun AltTextPage(
                         text = stringResource(id = R.string.gravatar_qe_avatar_alt_text_section_what_is),
                         color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.clickable {
-                            uriHandler.openUri(GravatarConstants.GRAVATAR_ALT_TEXT_HELP_URL)
+                            uriHandler.openUri(GRAVATAR_ALT_TEXT_HELP_URL)
                         },
                     )
                 }
