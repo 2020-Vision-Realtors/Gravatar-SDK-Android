@@ -18,4 +18,8 @@ public object GravatarConstants {
 
     /** Gravatar Sign-in URL */
     public const val GRAVATAR_SIGN_IN_URL: String = "$GRAVATAR_BASE_URL/profile"
+
+    /** Gravatar Alt Text help URL */
+    public const val GRAVATAR_ALT_TEXT_HELP_URL: String =
+        "https://support.gravatar.com/profiles/avatars/#add-alt-text-to-avatars"
 }

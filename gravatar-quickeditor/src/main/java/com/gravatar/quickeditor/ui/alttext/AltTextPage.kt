@@ -2,6 +2,7 @@ package com.gravatar.quickeditor.ui.alttext
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,6 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -36,6 +38,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
+import com.gravatar.GravatarConstants
 import com.gravatar.quickeditor.R
 import com.gravatar.quickeditor.ui.components.QEButton
 import com.gravatar.quickeditor.ui.components.QESectionTitle
@@ -118,6 +121,8 @@ internal fun AltTextPage(
     onEvent: (AltTextEvent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val uriHandler = LocalUriHandler.current
+
     Surface(modifier = modifier.fillMaxWidth()) {
         Box(
             modifier = Modifier
@@ -141,6 +146,9 @@ internal fun AltTextPage(
                     Text(
                         text = stringResource(id = R.string.gravatar_qe_avatar_alt_text_section_what_is),
                         color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.clickable {
+                            uriHandler.openUri(GravatarConstants.GRAVATAR_ALT_TEXT_HELP_URL)
+                        },
                     )
                 }
 
