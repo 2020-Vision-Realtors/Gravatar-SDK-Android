@@ -73,7 +73,9 @@ internal class AvatarStorage {
             val avatars = avatarsFlow.replayCache.lastOrNull()?.let {
                 it.map { avatar ->
                     if (avatar.imageId == avatarToUpdate.imageId) {
-                        avatarToUpdate
+                        // If the avatarToUpdate has a selected value, use it.
+                        // Otherwise, use the stored avatar selected value.
+                        avatarToUpdate.copy(selected = avatarToUpdate.selected ?: avatar.selected)
                     } else {
                         avatar
                     }
