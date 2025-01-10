@@ -13,11 +13,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -30,6 +30,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -146,9 +147,10 @@ internal fun AltTextPage(
                         title = stringResource(R.string.gravatar_qe_avatar_alt_text_section_title),
                         modifier = Modifier,
                     )
-                    Text(
-                        text = stringResource(id = R.string.gravatar_qe_avatar_alt_text_section_what_is),
-                        color = MaterialTheme.colorScheme.primary,
+                    Icon(
+                        painter = painterResource(id = R.drawable.gravatar_alt_text_help),
+                        tint = MaterialTheme.colorScheme.primary,
+                        contentDescription = stringResource(id = R.string.gravatar_qe_avatar_alt_text_section_what_is),
                         modifier = Modifier.clickable {
                             uriHandler.openUri(GRAVATAR_ALT_TEXT_HELP_URL)
                         },
