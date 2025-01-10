@@ -5,6 +5,7 @@ import com.gravatar.ui.GravatarTheme
 import com.gravatar.uitestutils.RoborazziTest
 import org.junit.Test
 import org.robolectric.annotation.Config
+import java.net.URI
 
 class AltTextPageTest : RoborazziTest() {
     @Test
@@ -12,7 +13,7 @@ class AltTextPageTest : RoborazziTest() {
         GravatarTheme {
             AltTextPage(
                 altTextState = AltTextUiState(
-                    avatarUrl = "https://gravatar.com/avatar/test",
+                    avatarUrl = URI("https://gravatar.com/avatar/test"),
                     isUpdating = false,
                     altText = "alt",
                     isSaveButtonEnabled = false,
@@ -28,7 +29,7 @@ class AltTextPageTest : RoborazziTest() {
         GravatarTheme {
             AltTextPage(
                 altTextState = AltTextUiState(
-                    avatarUrl = "https://gravatar.com/avatar/test",
+                    avatarUrl = URI("https://gravatar.com/avatar/test"),
                     isUpdating = false,
                     altText = "alt",
                     isSaveButtonEnabled = false,
@@ -43,7 +44,7 @@ class AltTextPageTest : RoborazziTest() {
         GravatarTheme {
             AltTextPage(
                 altTextState = AltTextUiState(
-                    avatarUrl = "https://gravatar.com/avatar/test",
+                    avatarUrl = URI("https://gravatar.com/avatar/test"),
                     isUpdating = false,
                     altText = "New alt text",
                     isSaveButtonEnabled = true,
@@ -59,7 +60,7 @@ class AltTextPageTest : RoborazziTest() {
         GravatarTheme {
             AltTextPage(
                 altTextState = AltTextUiState(
-                    avatarUrl = "https://gravatar.com/avatar/test",
+                    avatarUrl = URI("https://gravatar.com/avatar/test"),
                     isUpdating = false,
                     altText = "New alt text",
                     isSaveButtonEnabled = true,

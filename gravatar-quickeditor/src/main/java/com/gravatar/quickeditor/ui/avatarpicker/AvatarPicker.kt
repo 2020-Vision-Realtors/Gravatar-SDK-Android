@@ -89,7 +89,7 @@ internal fun AvatarPicker(
     handleExpiredSession: Boolean,
     onAvatarSelected: () -> Unit,
     onSessionExpired: () -> Unit,
-    onAltTextTapped: (email: String, avatarId: String, altText: String, avatarUrl: String) -> Unit,
+    onAltTextTapped: (email: String, avatarId: String) -> Unit,
     viewModel: AvatarPickerViewModel = viewModel(
         factory = AvatarPickerViewModelFactory(gravatarQuickEditorParams, handleExpiredSession),
     ),
@@ -334,7 +334,7 @@ private fun AvatarPickerAction.handle(
     cropperLauncher: CropperLauncher,
     onAvatarSelected: () -> Unit,
     onSessionExpired: () -> Unit,
-    onAltTextTapped: (email: String, avatarId: String, altText: String, avatarUrl: String) -> Unit,
+    onAltTextTapped: (email: String, avatarId: String) -> Unit,
     snackState: SnackbarHostState,
     context: Context,
     uCropLauncher: ManagedActivityResultLauncher<Intent, ActivityResult>,
@@ -425,8 +425,6 @@ private fun AvatarPickerAction.handle(
         is AvatarPickerAction.LaunchAvatarAltText -> onAltTextTapped(
             email.toString(),
             avatar.imageId,
-            avatar.altText,
-            avatar.imageUrl.toString(),
         )
     }
 }

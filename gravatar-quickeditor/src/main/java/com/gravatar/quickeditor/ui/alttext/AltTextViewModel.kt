@@ -19,17 +19,41 @@ import kotlinx.coroutines.launch
 internal class AltTextViewModel(
     private val email: String,
     private val avatarId: String,
-    private val altText: String,
-    avatarUrl: String,
     private val avatarRepository: AvatarRepository,
 ) : ViewModel() {
     private val _uiState =
         MutableStateFlow(
-            AltTextUiState(avatarUrl = avatarUrl, isSaveButtonEnabled = false, isUpdating = false, altText = altText),
+            AltTextUiState(isSaveButtonEnabled = false, isUpdating = false),
         )
     val uiState: StateFlow<AltTextUiState> = _uiState.asStateFlow()
     private val _actions = Channel<AltTextAction>(Channel.BUFFERED)
     val actions = _actions.receiveAsFlow()
+
+    private lateinit var originalAltText: String
+
+    init {
+        getAvatarData()
+    }
+
+    private fun getAvatarData() {
+        viewModelScope.launch {
+            val avatar = avatarRepository.getAvatars(
+                Email(email),
+            ).replayCache.firstOrNull()?.firstOrNull { it.imageId == avatarId }
+            if (avatar != null) {
+                originalAltText = avatar.altText
+
+                _uiState.update {
+                    it.copy(
+                        avatarUrl = avatar.imageUrl,
+                        altText = avatar.altText,
+                    )
+                }
+            } else {
+                _actions.send(AltTextAction.AvatarCantBeLoaded)
+            }
+        }
+    }
 
     fun onEvent(event: AltTextEvent) {
         when (event) {
@@ -75,7 +99,7 @@ internal class AltTextViewModel(
             _uiState.update { currentState ->
                 currentState.copy(
                     altText = newAltText,
-                    isSaveButtonEnabled = newAltText != altText,
+                    isSaveButtonEnabled = newAltText != originalAltText,
                 )
             }
         }
@@ -85,16 +109,12 @@ internal class AltTextViewModel(
 internal class AltTextViewModelFactory(
     private val email: String,
     private val avatarId: String,
-    private val altText: String,
-    private val avatarUrl: String,
 ) : ViewModelProvider.Factory {
     @Suppress("UNCHECKED_CAST")
     override fun <T : ViewModel> create(modelClass: Class<T>, extras: CreationExtras): T {
         return AltTextViewModel(
             email = email,
             avatarId = avatarId,
-            altText = altText,
-            avatarUrl = avatarUrl,
             avatarRepository = QuickEditorContainer.getInstance().avatarRepository,
         ) as T
     }
