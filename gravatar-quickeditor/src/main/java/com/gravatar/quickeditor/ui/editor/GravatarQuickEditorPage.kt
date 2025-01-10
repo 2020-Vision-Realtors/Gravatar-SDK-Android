@@ -12,7 +12,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import androidx.navigation.navOptions
 import com.gravatar.quickeditor.QuickEditorContainer
 import com.gravatar.quickeditor.ui.alttext.AltTextPage
 import com.gravatar.quickeditor.ui.avatarpicker.AvatarPicker
@@ -53,9 +52,9 @@ internal fun GravatarQuickEditorPage(
         composable(route = QuickEditorPage.SPLASH.name) {
             SplashPage(email = gravatarQuickEditorParams.email) { isAuthorized ->
                 if (isAuthorized) {
-                    navController.navigate(QuickEditorPage.EDITOR.name)
+                    navController.navigateAndClean(QuickEditorPage.EDITOR.name)
                 } else {
-                    navController.navigate(QuickEditorPage.OAUTH.name)
+                    navController.navigateAndClean(QuickEditorPage.OAUTH.name)
                 }
             }
         }
@@ -64,7 +63,9 @@ internal fun GravatarQuickEditorPage(
                 oAuthParams = oAuthParams,
                 email = gravatarQuickEditorParams.email,
                 onAuthError = { onDismiss(GravatarQuickEditorDismissReason.OauthFailed) },
-                onAuthSuccess = { navController.navigate(QuickEditorPage.EDITOR.name) },
+                onAuthSuccess = {
+                    navController.navigateAndClean(QuickEditorPage.EDITOR.name)
+                },
             )
         }
         addAvatarPickerGraph(
@@ -72,7 +73,9 @@ internal fun GravatarQuickEditorPage(
             handleExpiredSession = true,
             navController = navController,
             onAvatarSelected = onAvatarSelected,
-            onSessionExpired = { navController.navigate(QuickEditorPage.OAUTH.name) },
+            onSessionExpired = {
+                navController.navigateAndClean(QuickEditorPage.OAUTH.name)
+            },
         )
     }
 }
@@ -116,7 +119,7 @@ internal fun GravatarQuickEditorPage(
                 email = gravatarQuickEditorParams.email,
                 token = authToken,
             ) {
-                navController.navigate(QuickEditorPage.EDITOR.name)
+                navController.navigateAndClean(QuickEditorPage.EDITOR.name)
             }
         }
         addAvatarPickerGraph(
@@ -150,9 +153,6 @@ private fun NavGraphBuilder.addAvatarPickerGraph(
                     val encodedUrl = URLEncoder.encode(avatarUrl, StandardCharsets.UTF_8.toString())
                     navController.navigate(
                         route = "${EditorNavDestinations.ALT_TEXT.name}/$email/$avatarId/$altText/$encodedUrl",
-                        navOptions = navOptions {
-                            popUpTo(EditorNavDestinations.AVATAR_SELECTION.name) { saveState = true }
-                        },
                     )
                 },
             )
@@ -179,4 +179,11 @@ private fun NavGraphBuilder.addAvatarPickerGraph(
             )
         }
     }
+}
+
+private fun NavHostController.navigateAndClean(route: String) {
+    navigate(route = route) {
+        popUpTo(graph.startDestinationId) { inclusive = true }
+    }
+    graph.setStartDestination(route)
 }
