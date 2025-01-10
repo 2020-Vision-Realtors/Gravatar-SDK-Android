@@ -145,6 +145,7 @@ public final class com/gravatar/Gravatar {
 }
 
 public final class com/gravatar/GravatarConstants {
+	public static final field GRAVATAR_ALT_TEXT_HELP_URL Ljava/lang/String;
 	public static final field GRAVATAR_BASE_URL Ljava/lang/String;
 	public static final field GRAVATAR_SIGN_IN_URL Ljava/lang/String;
 	public static final field INSTANCE Lcom/gravatar/GravatarConstants;
