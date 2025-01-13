@@ -151,9 +151,9 @@ internal fun AltTextPage(
                         painter = painterResource(id = R.drawable.gravatar_alt_text_help),
                         tint = MaterialTheme.colorScheme.primary,
                         contentDescription = stringResource(id = R.string.gravatar_qe_avatar_alt_text_section_what_is),
-                        modifier = Modifier.clickable {
-                            uriHandler.openUri(GRAVATAR_ALT_TEXT_HELP_URL)
-                        },
+                        modifier = Modifier
+                            .clickable { uriHandler.openUri(GRAVATAR_ALT_TEXT_HELP_URL) }
+                            .padding(4.dp),
                     )
                 }
 
