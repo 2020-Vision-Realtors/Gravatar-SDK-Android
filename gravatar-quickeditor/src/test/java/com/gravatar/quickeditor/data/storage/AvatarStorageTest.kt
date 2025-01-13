@@ -2,6 +2,7 @@ package com.gravatar.quickeditor.data.storage
 
 import app.cash.turbine.test
 import com.gravatar.quickeditor.createAvatar
+import com.gravatar.quickeditor.ui.avatarpicker.copy
 import com.gravatar.types.Email
 import junit.framework.TestCase.assertEquals
 import kotlinx.coroutines.test.runTest
@@ -106,18 +107,45 @@ class AvatarStorageTest {
     }
 
     @Test
-    fun `given avatar when updateAvatar then avatarsFlow emits avatars with updated avatar`() = runTest {
+    fun `given avatar without selected info when updateAvatar then emits avatars with updated avatar`() = runTest {
         val email = Email("email")
 
         // Given
-        val avatars = listOf(createAvatar("otherAvatar"), createAvatar("imageId", altText = "altText"))
+        val avatars = listOf(
+            createAvatar("otherAvatar"),
+            createAvatar("imageId", altText = "altText", isSelected = true),
+        )
         avatarStorage.storeAvatars(avatars, email)
 
-        // When
+        // When - Updated avatar without selected info
         val updatedAvatar = createAvatar("imageId", altText = "newAltText")
         avatarStorage.updateAvatar(email, updatedAvatar)
 
-        // Then
+        // Then - Updated avatar should keep the selected value from the previous stored avatar
+        avatarStorage.avatarsFlow(email).test {
+            assertEquals(
+                listOf(createAvatar("otherAvatar"), updatedAvatar.copy(selected = true)),
+                awaitItem(),
+            )
+        }
+    }
+
+    @Test
+    fun `given avatar with selected info when updateAvatar then emits avatars with updated avatar`() = runTest {
+        val email = Email("email")
+
+        // Given
+        val avatars = listOf(
+            createAvatar("otherAvatar"),
+            createAvatar("imageId", altText = "altText", isSelected = false),
+        )
+        avatarStorage.storeAvatars(avatars, email)
+
+        // When - Updated avatar with selected info
+        val updatedAvatar = createAvatar("imageId", altText = "newAltText", isSelected = true)
+        avatarStorage.updateAvatar(email, updatedAvatar)
+
+        // Then - Updated avatar should keep the selected value from the updated avatar
         avatarStorage.avatarsFlow(email).test {
             assertEquals(
                 listOf(createAvatar("otherAvatar"), updatedAvatar),
