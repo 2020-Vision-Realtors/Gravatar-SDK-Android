@@ -21,6 +21,9 @@ internal class AvatarRepository(
 ) {
     fun getAvatars(email: Email) = avatarStorage.avatarsFlow(email).asSharedFlow()
 
+    fun getAvatar(email: Email, avatarId: String): Avatar? =
+        getAvatars(email).replayCache.firstOrNull()?.firstOrNull { it.imageId == avatarId }
+
     suspend fun refreshAvatars(email: Email): GravatarResult<List<Avatar>, QuickEditorError> = withContext(dispatcher) {
         val token = tokenStorage.getToken(email.hash().toString())
         token?.let {

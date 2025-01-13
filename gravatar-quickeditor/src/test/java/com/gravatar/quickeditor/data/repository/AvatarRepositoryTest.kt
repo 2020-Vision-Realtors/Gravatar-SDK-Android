@@ -97,6 +97,30 @@ class AvatarRepositoryTest {
     }
 
     @Test
+    fun `given email and avatarId when avatar is in avatarStore then avatar is returned`() = runTest {
+        val avatarId = "avatarId"
+        val avatar = createAvatar(avatarId)
+        coEvery { avatarStorage.avatarsFlow(email) } returns mockk {
+            every { replayCache } returns listOf(listOf(avatar))
+        }
+
+        val result = avatarRepository.getAvatar(email, avatarId)
+
+        assertEquals(avatar, result)
+    }
+
+    @Test
+    fun `given email and avatarId when avatar is not in avatarStore then null is returned`() = runTest {
+        coEvery { avatarStorage.avatarsFlow(email) } returns mockk {
+            every { replayCache } returns listOf(emptyList())
+        }
+
+        val result = avatarRepository.getAvatar(email, "nonExistentAvatarId")
+
+        assertEquals(null, result)
+    }
+
+    @Test
     fun `given email stored when token not found then TokenNotFound result`() = runTest {
         coEvery { tokenStorage.getToken(any()) } returns null
 

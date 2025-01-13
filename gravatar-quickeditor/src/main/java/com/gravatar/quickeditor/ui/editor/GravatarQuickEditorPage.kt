@@ -20,8 +20,6 @@ import com.gravatar.quickeditor.ui.navigation.QuickEditorPage
 import com.gravatar.quickeditor.ui.oauth.OAuthPage
 import com.gravatar.quickeditor.ui.oauth.OAuthParams
 import com.gravatar.quickeditor.ui.splash.SplashPage
-import java.net.URLEncoder
-import java.nio.charset.StandardCharsets
 
 /**
  * Raw composable component for the Quick Editor.
@@ -149,32 +147,25 @@ private fun NavGraphBuilder.addAvatarPickerGraph(
                 handleExpiredSession = handleExpiredSession,
                 onAvatarSelected = onAvatarSelected,
                 onSessionExpired = onSessionExpired,
-                onAltTextTapped = { email, avatarId, altText, avatarUrl ->
-                    val encodedUrl = URLEncoder.encode(avatarUrl, StandardCharsets.UTF_8.toString())
+                onAltTextTapped = { email, avatarId ->
                     navController.navigate(
-                        route = "${EditorNavDestinations.ALT_TEXT.name}/$email/$avatarId/$altText/$encodedUrl",
+                        route = "${EditorNavDestinations.ALT_TEXT.name}/$email/$avatarId",
                     )
                 },
             )
         }
         composable(
-            route = "${EditorNavDestinations.ALT_TEXT.name}/{email}/{avatarId}/{altText}/{avatarUrl}",
+            route = "${EditorNavDestinations.ALT_TEXT.name}/{email}/{avatarId}",
             arguments = listOf(
                 navArgument("email") { type = NavType.StringType },
                 navArgument("avatarId") { type = NavType.StringType },
-                navArgument("altText") { type = NavType.StringType },
-                navArgument("avatarUrl") { type = NavType.StringType },
             ),
         ) {
             val email = requireNotNull(it.arguments?.getString("email"))
             val avatarId = requireNotNull(it.arguments?.getString("avatarId"))
-            val altText = requireNotNull(it.arguments?.getString("altText"))
-            val avatarUrl = requireNotNull(it.arguments?.getString("avatarUrl"))
             AltTextPage(
                 email = email,
                 avatarId = avatarId,
-                altText = altText,
-                avatarUrl = avatarUrl,
                 onBackPressed = { navController.popBackStack() },
             )
         }

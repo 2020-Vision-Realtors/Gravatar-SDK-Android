@@ -49,6 +49,7 @@ import com.gravatar.ui.GravatarTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.net.URI
 import java.net.URL
 
 /** Gravatar Alt Text help URL */
@@ -59,12 +60,10 @@ private const val GRAVATAR_ALT_TEXT_HELP_URL: String =
 internal fun AltTextPage(
     email: String,
     avatarId: String,
-    altText: String,
-    avatarUrl: String,
     onBackPressed: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: AltTextViewModel = viewModel(
-        factory = AltTextViewModelFactory(email, avatarId, altText, avatarUrl),
+        factory = AltTextViewModelFactory(email, avatarId),
     ),
 ) {
     BackHandler {
@@ -82,7 +81,9 @@ internal fun AltTextPage(
             lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
                 viewModel.actions.collect { action ->
                     when (action) {
-                        is AltTextAction.AltTextUpdated -> {
+                        is AltTextAction.AvatarCantBeLoaded,
+                        is AltTextAction.AltTextUpdated,
+                        -> {
                             onBackPressed()
                         }
 
@@ -203,9 +204,9 @@ internal fun AltTextPage(
     }
 }
 
-private fun AltTextUiState.imageUrlWithSize(sizePx: Int) = URL(avatarUrl).let { url ->
+private fun AltTextUiState.imageUrlWithSize(sizePx: Int) = avatarUrl?.toURL()?.let { url ->
     URL(url.protocol, url.host, url.path.plus("?size=$sizePx"))
-}.toString()
+}?.toString().orEmpty()
 
 @Composable
 @Preview(showBackground = true)
@@ -213,7 +214,7 @@ private fun AltTextPagePreview() {
     GravatarTheme {
         AltTextPage(
             altTextState = AltTextUiState(
-                avatarUrl = "https://gravatar.com/avatar/test",
+                avatarUrl = URI.create("https://gravatar.com/avatar/test"),
                 isUpdating = false,
                 altText = "alt",
                 isSaveButtonEnabled = true,
@@ -229,7 +230,7 @@ private fun AltTextPageEmptyAltTextPreview() {
     GravatarTheme {
         AltTextPage(
             altTextState = AltTextUiState(
-                avatarUrl = "https://gravatar.com/avatar/test",
+                avatarUrl = URI.create("https://gravatar.com/avatar/test"),
                 isUpdating = false,
                 altText = "",
                 isSaveButtonEnabled = true,
