@@ -9,8 +9,10 @@ import com.gravatar.services.GravatarResult
 import io.mockk.coEvery
 import io.mockk.mockk
 import junit.framework.TestCase.assertEquals
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
 import org.junit.Rule
 import org.junit.Test
@@ -44,13 +46,14 @@ class AltTextViewModelTest {
             }
         }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     @Test
     fun `given some initial values when view model is initialized then uiState is correct`() = runTest {
         initWithAvatarStorage(createAvatar(id = avatarId, url = avatarUrl, altText = altText))
 
-        viewModel.uiState.test {
-            skipItems(1) // Skipping the initial value
+        advanceUntilIdle()
 
+        viewModel.uiState.test {
             val altTextUiState = AltTextUiState(
                 avatarUrl = avatarUrl,
                 isSaveButtonEnabled = false,
@@ -58,19 +61,23 @@ class AltTextViewModelTest {
                 altText = altText,
             )
 
-            assertEquals(altTextUiState, awaitItem())
+            assertEquals(altTextUiState, expectMostRecentItem())
         }
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     @Test
     fun `given an alt text change event when onEvent is called then uiState is updated with new alt text`() = runTest {
         initWithAvatarStorage(createAvatar(id = avatarId, url = avatarUrl, altText = altText))
 
         val newAltText = "New Alternative Text"
-        viewModel.onEvent(AltTextEvent.AvatarAltTextChange(newAltText))
+
+        advanceUntilIdle()
 
         viewModel.uiState.test {
-            skipItems(2) // Skipping the initial value and the value set in the init block
+            expectMostRecentItem()
+
+            viewModel.onEvent(AltTextEvent.AvatarAltTextChange(newAltText))
 
             val altTextUiState = AltTextUiState(
                 avatarUrl = avatarUrl,
@@ -83,6 +90,7 @@ class AltTextViewModelTest {
         }
     }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     @Test
     fun `given an alt text save tapped event when alt text is successfully updated then uiState is updated`() =
         runTest {
@@ -95,10 +103,12 @@ class AltTextViewModelTest {
 
             viewModel.onEvent(AltTextEvent.AvatarAltTextChange(newAltText))
 
-            viewModel.onEvent(AltTextEvent.AvatarAltTextSaveTapped)
+            advanceUntilIdle()
 
             viewModel.uiState.test {
-                skipItems(3) // Skipping the following values: initial, init block and alt text change event
+                expectMostRecentItem()
+
+                viewModel.onEvent(AltTextEvent.AvatarAltTextSaveTapped)
 
                 var altTextUiState = AltTextUiState(
                     avatarUrl = avatarUrl,
@@ -122,6 +132,7 @@ class AltTextViewModelTest {
             }
         }
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     @Test
     fun `given an alt text save tapped event when alt text update fails then uiState is updated`() = runTest {
         initWithAvatarStorage(createAvatar(id = avatarId, url = avatarUrl, altText = altText))
@@ -133,10 +144,12 @@ class AltTextViewModelTest {
 
         viewModel.onEvent(AltTextEvent.AvatarAltTextChange(newAltText))
 
-        viewModel.onEvent(AltTextEvent.AvatarAltTextSaveTapped)
+        advanceUntilIdle()
 
         viewModel.uiState.test {
-            skipItems(3) // Skipping the following values: initial, init block and alt text change event
+            expectMostRecentItem()
+
+            viewModel.onEvent(AltTextEvent.AvatarAltTextSaveTapped)
 
             var altTextUiState = AltTextUiState(
                 avatarUrl = avatarUrl,
