@@ -10,7 +10,6 @@ import io.mockk.coEvery
 import io.mockk.mockk
 import junit.framework.TestCase.assertEquals
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runTest
@@ -31,13 +30,11 @@ class AltTextViewModelTest {
     private val altText = "Alternative Text"
     private val avatarUrl = URI("https://gravatar.com/avatar/test")
     private val avatarRepository = mockk<AvatarRepository>()
-    private val avatarsSharedFlow = mockk<SharedFlow<List<Avatar>>>()
 
     @Test
     fun `given an avatar that can't be loaded when view model is initialized then  AvatarCantBeLoaded is sent`() =
         runTest {
-            coEvery { avatarRepository.getAvatars(any()) } returns avatarsSharedFlow
-            coEvery { avatarsSharedFlow.replayCache } returns listOf(emptyList())
+            coEvery { avatarRepository.getAvatar(any(), any()) } returns null
 
             viewModel = AltTextViewModel(email, avatarId, avatarRepository)
 
@@ -174,12 +171,7 @@ class AltTextViewModelTest {
     }
 
     private fun initWithAvatarStorage(avatar: Avatar) {
-        initWithAvatarStorage(listOf(avatar))
-    }
-
-    private fun initWithAvatarStorage(avatars: List<Avatar>) {
-        coEvery { avatarRepository.getAvatars(any()) } returns avatarsSharedFlow
-        coEvery { avatarsSharedFlow.replayCache } returns listOf(avatars)
+        coEvery { avatarRepository.getAvatar(any(), any()) } returns avatar
 
         viewModel = AltTextViewModel(email, avatarId, avatarRepository)
     }

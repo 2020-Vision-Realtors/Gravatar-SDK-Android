@@ -37,9 +37,7 @@ internal class AltTextViewModel(
 
     private fun getAvatarData() {
         viewModelScope.launch {
-            val avatar = avatarRepository.getAvatars(
-                Email(email),
-            ).replayCache.firstOrNull()?.firstOrNull { it.imageId == avatarId }
+            val avatar = avatarRepository.getAvatar(Email(email), avatarId)
             if (avatar != null) {
                 originalAltText = avatar.altText
 
