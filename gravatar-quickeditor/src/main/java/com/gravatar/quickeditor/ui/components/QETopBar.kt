@@ -2,6 +2,7 @@ package com.gravatar.quickeditor.ui.components
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -25,7 +26,20 @@ import com.gravatar.quickeditor.R
 import com.gravatar.ui.GravatarTheme
 
 @Composable
-internal fun QETopBar(onDoneClick: () -> Unit, modifier: Modifier = Modifier, onGravatarIconClick: () -> Unit = {}) {
+internal fun QETopBarWithContent(
+    onDoneClick: () -> Unit,
+    onGravatarIconClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit = {},
+) {
+    Column {
+        QETopBar(onDoneClick = onDoneClick, modifier = modifier, onGravatarIconClick = onGravatarIconClick)
+        content()
+    }
+}
+
+@Composable
+private fun QETopBar(onDoneClick: () -> Unit, modifier: Modifier = Modifier, onGravatarIconClick: () -> Unit = {}) {
     GravatarCenterAlignedTopAppBar(
         modifier = modifier,
         title = {
@@ -110,5 +124,17 @@ private fun GravatarCenterAlignedTopAppBar(
 private fun QETopBarPreview() {
     GravatarTheme {
         QETopBar(onDoneClick = {}, onGravatarIconClick = {})
+    }
+}
+
+@Preview
+@Composable
+private fun QETopBarWithContentPreview() {
+    GravatarTheme {
+        QETopBarWithContent(onDoneClick = {}, onGravatarIconClick = {}) {
+            Surface(Modifier) {
+                Text(text = "Content HERE")
+            }
+        }
     }
 }

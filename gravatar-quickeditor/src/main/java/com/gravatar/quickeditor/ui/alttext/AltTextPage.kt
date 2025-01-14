@@ -49,6 +49,7 @@ import coil.compose.AsyncImage
 import com.gravatar.quickeditor.R
 import com.gravatar.quickeditor.ui.components.QEButton
 import com.gravatar.quickeditor.ui.components.QESectionTitle
+import com.gravatar.quickeditor.ui.components.QETopBarWithContent
 import com.gravatar.quickeditor.ui.extensions.QESnackbarHost
 import com.gravatar.quickeditor.ui.extensions.SnackbarType
 import com.gravatar.quickeditor.ui.extensions.showQESnackbar
@@ -68,6 +69,7 @@ internal fun AltTextPage(
     email: String,
     avatarId: String,
     onBackPressed: () -> Unit,
+    onGravatarIconClicked: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: AltTextViewModel = viewModel(
         factory = AltTextViewModelFactory(email, avatarId),
@@ -90,7 +92,7 @@ internal fun AltTextPage(
                     when (action) {
                         is AltTextAction.AvatarCantBeLoaded,
                         is AltTextAction.AltTextUpdated,
-                        -> {
+                            -> {
                             onBackPressed()
                         }
 
@@ -111,21 +113,26 @@ internal fun AltTextPage(
     }
 
     GravatarTheme {
-        Box(
-            modifier = modifier
-                .padding(16.dp)
-                .wrapContentSize(),
+        QETopBarWithContent(
+            onDoneClick = { onBackPressed() },
+            onGravatarIconClick = onGravatarIconClicked,
         ) {
-            state.let { altTextState ->
-                AltTextPage(
-                    altTextState = altTextState,
-                    onEvent = viewModel::onEvent,
-                )
-                QESnackbarHost(
-                    modifier = Modifier
-                        .align(Alignment.BottomStart),
-                    hostState = snackState,
-                )
+            Box(
+                modifier = modifier
+                    .padding(16.dp)
+                    .wrapContentSize(),
+            ) {
+                state.let { altTextState ->
+                    AltTextPage(
+                        altTextState = altTextState,
+                        onEvent = viewModel::onEvent,
+                    )
+                    QESnackbarHost(
+                        modifier = Modifier
+                            .align(Alignment.BottomStart),
+                        hostState = snackState,
+                    )
+                }
             }
         }
     }

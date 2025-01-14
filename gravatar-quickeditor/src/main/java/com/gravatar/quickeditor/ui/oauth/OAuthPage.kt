@@ -41,6 +41,7 @@ import com.gravatar.quickeditor.data.appName
 import com.gravatar.quickeditor.ui.components.CtaSection
 import com.gravatar.quickeditor.ui.components.ProfileCard
 import com.gravatar.quickeditor.ui.components.QESectionMessage
+import com.gravatar.quickeditor.ui.components.QETopBarWithContent
 import com.gravatar.types.Email
 import com.gravatar.ui.GravatarTheme
 import kotlinx.coroutines.Dispatchers
@@ -53,6 +54,8 @@ internal fun OAuthPage(
     oAuthParams: OAuthParams,
     onAuthSuccess: () -> Unit,
     onAuthError: () -> Unit,
+    onDoneClicked: () -> Unit,
+    onGravatarIconClicked: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: OAuthViewModel = viewModel(factory = OAuthViewModelFactory(email)),
 ) {
@@ -101,13 +104,15 @@ internal fun OAuthPage(
         }
     }
 
-    OauthPage(
-        uiState = uiState,
-        email = email,
-        onStartOAuthClicked = viewModel::startOAuth,
-        onEmailAssociationCheckClicked = remember { { viewModel.checkAuthorizedUserEmail(email, it) } },
-        modifier = modifier,
-    )
+    QETopBarWithContent(onDoneClick = onDoneClicked, onGravatarIconClick = onGravatarIconClicked) {
+        OauthPage(
+            uiState = uiState,
+            email = email,
+            onStartOAuthClicked = viewModel::startOAuth,
+            onEmailAssociationCheckClicked = remember { { viewModel.checkAuthorizedUserEmail(email, it) } },
+            modifier = modifier,
+        )
+    }
 }
 
 @Composable
