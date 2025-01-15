@@ -69,7 +69,6 @@ internal fun AltTextPage(
     email: String,
     avatarId: String,
     onBackPressed: () -> Unit,
-    onGravatarIconClicked: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: AltTextViewModel = viewModel(
         factory = AltTextViewModelFactory(email, avatarId),
@@ -92,7 +91,7 @@ internal fun AltTextPage(
                     when (action) {
                         is AltTextAction.AvatarCantBeLoaded,
                         is AltTextAction.AltTextUpdated,
-                            -> {
+                        -> {
                             onBackPressed()
                         }
 
@@ -115,7 +114,6 @@ internal fun AltTextPage(
     GravatarTheme {
         QETopBarWithContent(
             onDoneClick = { onBackPressed() },
-            onGravatarIconClick = onGravatarIconClicked,
         ) {
             Box(
                 modifier = modifier

@@ -34,7 +34,6 @@ import com.gravatar.quickeditor.ui.splash.SplashPage
  * @param onAvatarSelected The callback for the avatar update.
  *                       Can be invoked multiple times while the Quick Editor is open
  * @param onDoneClicked The callback for the done action.
- * @param onGravatarIconClicked The callback for the Gravatar icon click action.
  * @param onDismiss The callback for the dismiss action.
  *                  [GravatarQuickEditorError] will be non-null if the dismiss was caused by an error.
  */
@@ -44,7 +43,6 @@ internal fun GravatarQuickEditorPage(
     oAuthParams: OAuthParams,
     onAvatarSelected: () -> Unit,
     onDoneClicked: () -> Unit,
-    onGravatarIconClicked: () -> Unit,
     onDismiss: (dismissReason: GravatarQuickEditorDismissReason) -> Unit = {},
 ) {
     val navController = rememberNavController()
@@ -59,7 +57,6 @@ internal fun GravatarQuickEditorPage(
             SplashPage(
                 email = gravatarQuickEditorParams.email,
                 onDoneClicked = onDoneClicked,
-                onGravatarIconClicked = onGravatarIconClicked,
             ) { isAuthorized ->
                 if (isAuthorized) {
                     navController.navigateAndPopupTo(QuickEditorPage.EDITOR.name, QuickEditorPage.SPLASH.name)
@@ -77,7 +74,6 @@ internal fun GravatarQuickEditorPage(
                     navController.navigateAndPopupTo(QuickEditorPage.EDITOR.name, QuickEditorPage.OAUTH.name)
                 },
                 onDoneClicked = onDoneClicked,
-                onGravatarIconClicked = onGravatarIconClicked,
             )
         }
         addAvatarPickerGraph(
@@ -89,7 +85,6 @@ internal fun GravatarQuickEditorPage(
                 navController.navigateAndPopupTo(QuickEditorPage.OAUTH.name, QuickEditorPage.EDITOR.name)
             },
             onDoneClicked = onDoneClicked,
-            onGravatarIconClicked = onGravatarIconClicked,
         )
     }
 }
@@ -103,7 +98,6 @@ internal fun GravatarQuickEditorPage(
  * @param onAvatarSelected The callback for the avatar update.
  *                       Can be invoked multiple times while the Quick Editor is open
  * @param onDoneClicked The callback for the done action.
- * @param onGravatarIconClicked The callback for the Gravatar icon click action.
  * @param onDismiss The callback for the dismiss action.
  *                  [GravatarQuickEditorError] will be non-null if the dismiss was caused by an error.
  */
@@ -113,7 +107,6 @@ internal fun GravatarQuickEditorPage(
     authToken: String,
     onAvatarSelected: () -> Unit,
     onDoneClicked: () -> Unit,
-    onGravatarIconClicked: () -> Unit,
     onDismiss: (dismissReason: GravatarQuickEditorDismissReason) -> Unit = {},
 ) {
     val navController = rememberNavController()
@@ -137,7 +130,6 @@ internal fun GravatarQuickEditorPage(
                 email = gravatarQuickEditorParams.email,
                 token = authToken,
                 onDoneClicked = onDoneClicked,
-                onGravatarIconClicked = onGravatarIconClicked,
             ) {
                 navController.navigateAndPopupTo(QuickEditorPage.EDITOR.name, QuickEditorPage.SPLASH.name)
             }
@@ -149,7 +141,6 @@ internal fun GravatarQuickEditorPage(
             onAvatarSelected = onAvatarSelected,
             onSessionExpired = { onDismiss(GravatarQuickEditorDismissReason.InvalidToken) },
             onDoneClicked = onDoneClicked,
-            onGravatarIconClicked = onGravatarIconClicked,
         )
     }
 }
@@ -162,7 +153,6 @@ private fun NavGraphBuilder.addAvatarPickerGraph(
     onAvatarSelected: () -> Unit,
     onSessionExpired: () -> Unit,
     onDoneClicked: () -> Unit,
-    onGravatarIconClicked: () -> Unit,
 ) {
     navigation(
         route = QuickEditorPage.EDITOR.name,
@@ -187,7 +177,6 @@ private fun NavGraphBuilder.addAvatarPickerGraph(
                     )
                 },
                 onDoneClicked = onDoneClicked,
-                onGravatarIconClicked = onGravatarIconClicked,
             )
         }
         composable(
@@ -205,7 +194,6 @@ private fun NavGraphBuilder.addAvatarPickerGraph(
                 email = email,
                 avatarId = avatarId,
                 onBackPressed = { navController.popBackStack() },
-                onGravatarIconClicked = onGravatarIconClicked,
             )
         }
     }

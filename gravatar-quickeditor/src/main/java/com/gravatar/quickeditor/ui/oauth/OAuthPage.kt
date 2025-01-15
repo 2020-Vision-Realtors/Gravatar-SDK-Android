@@ -55,7 +55,6 @@ internal fun OAuthPage(
     onAuthSuccess: () -> Unit,
     onAuthError: () -> Unit,
     onDoneClicked: () -> Unit,
-    onGravatarIconClicked: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: OAuthViewModel = viewModel(factory = OAuthViewModelFactory(email)),
 ) {
@@ -104,7 +103,7 @@ internal fun OAuthPage(
         }
     }
 
-    QETopBarWithContent(onDoneClick = onDoneClicked, onGravatarIconClick = onGravatarIconClicked) {
+    QETopBarWithContent(onDoneClick = onDoneClicked) {
         OauthPage(
             uiState = uiState,
             email = email,

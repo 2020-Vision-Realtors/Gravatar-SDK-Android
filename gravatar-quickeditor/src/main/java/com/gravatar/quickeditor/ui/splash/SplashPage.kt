@@ -24,7 +24,6 @@ internal fun SplashPage(
     token: String? = null,
     viewModel: SplashViewModel = viewModel(factory = SplashViewModelFactory(email, token)),
     onDoneClicked: () -> Unit,
-    onGravatarIconClicked: () -> Unit,
     onAuthorized: (Boolean) -> Unit,
 ) {
     val currentOnAuthorized by rememberUpdatedState(onAuthorized)
@@ -44,7 +43,7 @@ internal fun SplashPage(
     }
 
     GravatarTheme {
-        QETopBarWithContent(onDoneClick = onDoneClicked, onGravatarIconClick = onGravatarIconClicked) {
+        QETopBarWithContent(onDoneClick = onDoneClicked) {
             Surface(modifier = Modifier.height(DEFAULT_PAGE_HEIGHT)) {}
         }
     }

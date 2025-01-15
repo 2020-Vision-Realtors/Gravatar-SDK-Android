@@ -17,23 +17,28 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.gravatar.GravatarConstants
 import com.gravatar.quickeditor.R
 import com.gravatar.ui.GravatarTheme
 
 @Composable
 internal fun QETopBarWithContent(
     onDoneClick: () -> Unit,
-    onGravatarIconClick: () -> Unit,
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit = {},
 ) {
+    val uriHandler = LocalUriHandler.current
+
     Column {
-        QETopBar(onDoneClick = onDoneClick, modifier = modifier, onGravatarIconClick = onGravatarIconClick)
+        QETopBar(onDoneClick = onDoneClick, modifier = modifier, onGravatarIconClick = {
+            uriHandler.openUri(GravatarConstants.GRAVATAR_SIGN_IN_URL)
+        })
         content()
     }
 }
@@ -131,7 +136,7 @@ private fun QETopBarPreview() {
 @Composable
 private fun QETopBarWithContentPreview() {
     GravatarTheme {
-        QETopBarWithContent(onDoneClick = {}, onGravatarIconClick = {}) {
+        QETopBarWithContent(onDoneClick = {}) {
             Surface(Modifier) {
                 Text(text = "Content HERE")
             }

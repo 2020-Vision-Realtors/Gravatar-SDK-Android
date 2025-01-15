@@ -91,7 +91,6 @@ internal fun AvatarPicker(
     onAvatarSelected: () -> Unit,
     onSessionExpired: () -> Unit,
     onDoneClicked: () -> Unit,
-    onGravatarIconClicked: () -> Unit,
     onAltTextTapped: (email: String, avatarId: String) -> Unit,
     viewModel: AvatarPickerViewModel = viewModel(
         factory = AvatarPickerViewModelFactory(gravatarQuickEditorParams, handleExpiredSession),
@@ -133,7 +132,7 @@ internal fun AvatarPicker(
     }
 
     GravatarTheme {
-        QETopBarWithContent(onDoneClick = onDoneClicked, onGravatarIconClick = onGravatarIconClicked) {
+        QETopBarWithContent(onDoneClick = onDoneClicked) {
             Box(modifier = Modifier.wrapContentSize()) {
                 AvatarPicker(
                     uiState = uiState,

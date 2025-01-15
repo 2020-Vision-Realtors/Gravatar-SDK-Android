@@ -8,12 +8,12 @@ import org.robolectric.annotation.Config
 class QETopBarTest : RoborazziTest() {
     @Test
     fun qrTopBarLight() = gravatarScreenshotTest {
-        QETopBarWithContent(onDoneClick = {}, onGravatarIconClick = {})
+        QETopBarWithContent(onDoneClick = {})
     }
 
     @Test
     @Config(qualifiers = "+night")
     fun qrTopBarDark() = gravatarScreenshotTest {
-        QETopBarWithContent(onDoneClick = {}, onGravatarIconClick = {})
+        QETopBarWithContent(onDoneClick = {})
     }
 }
