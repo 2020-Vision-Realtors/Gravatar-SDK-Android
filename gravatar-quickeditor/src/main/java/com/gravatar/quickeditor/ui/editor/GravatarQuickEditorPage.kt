@@ -1,7 +1,11 @@
 package com.gravatar.quickeditor.ui.editor
 
+import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.navigation.NavGraphBuilder
@@ -141,7 +145,14 @@ private fun NavGraphBuilder.addAvatarPickerGraph(
         route = QuickEditorPage.EDITOR.name,
         startDestination = EditorNavDestinations.AVATAR_SELECTION.name,
     ) {
-        composable(route = EditorNavDestinations.AVATAR_SELECTION.name) {
+        composable(
+            route = EditorNavDestinations.AVATAR_SELECTION.name,
+            enterTransition = { fadeIn() },
+            popEnterTransition = { fadeIn() + expandVertically() },
+            exitTransition = {
+                slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Start) + shrinkVertically()
+            },
+        ) {
             AvatarPicker(
                 gravatarQuickEditorParams = gravatarQuickEditorParams,
                 handleExpiredSession = handleExpiredSession,
@@ -160,6 +171,8 @@ private fun NavGraphBuilder.addAvatarPickerGraph(
                 navArgument("email") { type = NavType.StringType },
                 navArgument("avatarId") { type = NavType.StringType },
             ),
+            exitTransition = { slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.End) },
+            enterTransition = { slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Start) },
         ) {
             val email = requireNotNull(it.arguments?.getString("email"))
             val avatarId = requireNotNull(it.arguments?.getString("avatarId"))
