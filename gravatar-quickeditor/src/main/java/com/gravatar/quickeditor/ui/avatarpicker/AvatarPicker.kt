@@ -61,8 +61,9 @@ import com.gravatar.quickeditor.ui.components.EmailLabel
 import com.gravatar.quickeditor.ui.components.FailedAvatarUploadAlertDialog
 import com.gravatar.quickeditor.ui.components.PermissionRationaleDialog
 import com.gravatar.quickeditor.ui.components.ProfileCard
+import com.gravatar.quickeditor.ui.components.QEPage
+import com.gravatar.quickeditor.ui.components.QETopBar
 import com.gravatar.quickeditor.ui.components.QETopBarTextButton
-import com.gravatar.quickeditor.ui.components.QETopBarWithContent
 import com.gravatar.quickeditor.ui.cropperlauncher.CropperLauncher
 import com.gravatar.quickeditor.ui.cropperlauncher.UCropCropperLauncher
 import com.gravatar.quickeditor.ui.editor.AvatarPickerContentLayout
@@ -133,21 +134,22 @@ internal fun AvatarPicker(
     }
 
     GravatarTheme {
-        QETopBarWithContent(
-            leftButton = { QETopBarTextButton(onClick = onDoneClicked) },
-        ) {
-            Box(modifier = Modifier.wrapContentSize()) {
-                AvatarPicker(
-                    uiState = uiState,
-                    onEvent = viewModel::onEvent,
-                )
-                QESnackbarHost(
-                    modifier = Modifier
-                        .align(Alignment.BottomStart),
-                    hostState = snackState,
-                )
-            }
-        }
+        QEPage(
+            topBar = { QETopBar(leftButton = { QETopBarTextButton(onClick = onDoneClicked) }) },
+            content = {
+                Box(modifier = Modifier.wrapContentSize()) {
+                    AvatarPicker(
+                        uiState = uiState,
+                        onEvent = viewModel::onEvent,
+                    )
+                    QESnackbarHost(
+                        modifier = Modifier
+                            .align(Alignment.BottomStart),
+                        hostState = snackState,
+                    )
+                }
+            },
+        )
     }
 }
 

@@ -2,7 +2,6 @@ package com.gravatar.quickeditor.ui.components
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -28,31 +27,9 @@ import com.gravatar.quickeditor.R
 import com.gravatar.ui.GravatarTheme
 
 @Composable
-internal fun QETopBarWithContent(
-    leftButton: @Composable () -> Unit,
-    modifier: Modifier = Modifier,
-    content: @Composable () -> Unit = {},
-) {
+internal fun QETopBar(leftButton: @Composable () -> Unit, modifier: Modifier = Modifier) {
     val uriHandler = LocalUriHandler.current
 
-    Column {
-        QETopBar(
-            leftButton = leftButton,
-            modifier = modifier,
-            onGravatarIconClick = {
-                uriHandler.openUri(GravatarConstants.GRAVATAR_SIGN_IN_URL)
-            },
-        )
-        content()
-    }
-}
-
-@Composable
-private fun QETopBar(
-    leftButton: @Composable () -> Unit,
-    modifier: Modifier = Modifier,
-    onGravatarIconClick: () -> Unit = {},
-) {
     GravatarCenterAlignedTopAppBar(
         modifier = modifier,
         title = {
@@ -68,7 +45,9 @@ private fun QETopBar(
                 tint = MaterialTheme.colorScheme.primary,
                 contentDescription = stringResource(id = R.string.gravatar_qe_gravatar),
                 modifier = Modifier
-                    .clickable(onClick = onGravatarIconClick)
+                    .clickable(onClick = {
+                        uriHandler.openUri(GravatarConstants.GRAVATAR_SIGN_IN_URL)
+                    })
                     .size(34.dp)
                     .padding(end = 8.dp),
             )
@@ -142,6 +121,6 @@ private fun GravatarCenterAlignedTopAppBar(
 @Composable
 private fun QETopBarPreview() {
     GravatarTheme {
-        QETopBar(leftButton = { QETopBarTextButton({}) }, onGravatarIconClick = {})
+        QETopBar(leftButton = { QETopBarTextButton({}) })
     }
 }
