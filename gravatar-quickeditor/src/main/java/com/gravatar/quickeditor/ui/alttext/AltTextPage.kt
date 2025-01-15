@@ -113,7 +113,7 @@ internal fun AltTextPage(
 
     GravatarTheme {
         QETopBarWithContent(
-            onDoneClick = { onBackPressed() },
+            onLeftButtonClick = onBackPressed,
         ) {
             Box(
                 modifier = modifier

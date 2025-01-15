@@ -132,7 +132,7 @@ internal fun AvatarPicker(
     }
 
     GravatarTheme {
-        QETopBarWithContent(onDoneClick = onDoneClicked) {
+        QETopBarWithContent(onLeftButtonClick = onDoneClicked) {
             Box(modifier = Modifier.wrapContentSize()) {
                 AvatarPicker(
                     uiState = uiState,

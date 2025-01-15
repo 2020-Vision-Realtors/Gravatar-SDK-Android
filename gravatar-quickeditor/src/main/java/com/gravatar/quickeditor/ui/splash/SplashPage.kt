@@ -43,7 +43,7 @@ internal fun SplashPage(
     }
 
     GravatarTheme {
-        QETopBarWithContent(onDoneClick = onDoneClicked) {
+        QETopBarWithContent(onLeftButtonClick = onDoneClicked) {
             Surface(modifier = Modifier.height(DEFAULT_PAGE_HEIGHT)) {}
         }
     }

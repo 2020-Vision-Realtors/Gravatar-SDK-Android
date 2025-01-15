@@ -103,7 +103,7 @@ internal fun OAuthPage(
         }
     }
 
-    QETopBarWithContent(onDoneClick = onDoneClicked) {
+    QETopBarWithContent(onLeftButtonClick = onDoneClicked) {
         OauthPage(
             uiState = uiState,
             email = email,

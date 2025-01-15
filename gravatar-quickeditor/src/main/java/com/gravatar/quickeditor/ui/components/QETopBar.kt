@@ -29,22 +29,33 @@ import com.gravatar.ui.GravatarTheme
 
 @Composable
 internal fun QETopBarWithContent(
-    onDoneClick: () -> Unit,
+    onLeftButtonClick: () -> Unit,
     modifier: Modifier = Modifier,
+    leftButtonLabel: String = stringResource(R.string.gravatar_qe_bottom_sheet_done),
     content: @Composable () -> Unit = {},
 ) {
     val uriHandler = LocalUriHandler.current
 
     Column {
-        QETopBar(onDoneClick = onDoneClick, modifier = modifier, onGravatarIconClick = {
-            uriHandler.openUri(GravatarConstants.GRAVATAR_SIGN_IN_URL)
-        })
+        QETopBar(
+            onLeftButtonClick = onLeftButtonClick,
+            modifier = modifier,
+            leftButtonLabel = leftButtonLabel,
+            onGravatarIconClick = {
+                uriHandler.openUri(GravatarConstants.GRAVATAR_SIGN_IN_URL)
+            },
+        )
         content()
     }
 }
 
 @Composable
-private fun QETopBar(onDoneClick: () -> Unit, modifier: Modifier = Modifier, onGravatarIconClick: () -> Unit = {}) {
+private fun QETopBar(
+    onLeftButtonClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    leftButtonLabel: String = stringResource(R.string.gravatar_qe_bottom_sheet_done),
+    onGravatarIconClick: () -> Unit = {},
+) {
     GravatarCenterAlignedTopAppBar(
         modifier = modifier,
         title = {
@@ -55,11 +66,11 @@ private fun QETopBar(onDoneClick: () -> Unit, modifier: Modifier = Modifier, onG
         },
         navigationIcon = {
             TextButton(
-                onClick = onDoneClick,
+                onClick = onLeftButtonClick,
             ) {
                 Text(
                     style = MaterialTheme.typography.labelLarge,
-                    text = stringResource(R.string.gravatar_qe_bottom_sheet_done),
+                    text = leftButtonLabel,
                 )
             }
         },
@@ -128,7 +139,7 @@ private fun GravatarCenterAlignedTopAppBar(
 @Composable
 private fun QETopBarPreview() {
     GravatarTheme {
-        QETopBar(onDoneClick = {}, onGravatarIconClick = {})
+        QETopBar(onLeftButtonClick = {}, onGravatarIconClick = {})
     }
 }
 
@@ -136,7 +147,7 @@ private fun QETopBarPreview() {
 @Composable
 private fun QETopBarWithContentPreview() {
     GravatarTheme {
-        QETopBarWithContent(onDoneClick = {}) {
+        QETopBarWithContent(onLeftButtonClick = {}) {
             Surface(Modifier) {
                 Text(text = "Content HERE")
             }
