@@ -103,15 +103,14 @@ internal fun OAuthPage(
         }
     }
 
-    QETopBarWithContent(onLeftButtonClick = onDoneClicked) {
-        OauthPage(
-            uiState = uiState,
-            email = email,
-            onStartOAuthClicked = viewModel::startOAuth,
-            onEmailAssociationCheckClicked = remember { { viewModel.checkAuthorizedUserEmail(email, it) } },
-            modifier = modifier,
-        )
-    }
+    OauthPage(
+        uiState = uiState,
+        email = email,
+        onStartOAuthClicked = viewModel::startOAuth,
+        onDoneClicked = onDoneClicked,
+        onEmailAssociationCheckClicked = remember { { viewModel.checkAuthorizedUserEmail(email, it) } },
+        modifier = modifier,
+    )
 }
 
 @Composable
@@ -119,83 +118,86 @@ internal fun OauthPage(
     uiState: OAuthUiState,
     email: Email,
     onStartOAuthClicked: () -> Unit,
+    onDoneClicked: () -> Unit,
     modifier: Modifier = Modifier,
     onEmailAssociationCheckClicked: (String) -> Unit = {},
 ) {
     val context = LocalContext.current
     GravatarTheme {
-        Surface {
-            Column(
-                modifier = modifier
-                    .padding(horizontal = 16.dp)
-                    .fillMaxWidth(),
-            ) {
-                Text(
-                    text = stringResource(R.string.gravatar_qe_oauth_page_title),
-                    style = MaterialTheme.typography.headlineMedium.copy(
-                        fontWeight = FontWeight.Black,
-                        fontSize = 32.sp,
-                        letterSpacing = 0.4.sp,
-                    ),
-                    modifier = Modifier.padding(top = 10.dp),
-                )
-                QESectionMessage(
-                    message = stringResource(R.string.gravatar_qe_oauth_page_message, context.appName),
-                    modifier = Modifier.padding(top = 4.dp),
-                )
-                uiState.profile?.let {
-                    ProfileCard(
-                        profile = it,
-                        modifier = Modifier.padding(top = 16.dp),
+        QETopBarWithContent(onLeftButtonClick = onDoneClicked) {
+            Surface {
+                Column(
+                    modifier = modifier
+                        .padding(horizontal = 16.dp)
+                        .fillMaxWidth(),
+                ) {
+                    Text(
+                        text = stringResource(R.string.gravatar_qe_oauth_page_title),
+                        style = MaterialTheme.typography.headlineMedium.copy(
+                            fontWeight = FontWeight.Black,
+                            fontSize = 32.sp,
+                            letterSpacing = 0.4.sp,
+                        ),
+                        modifier = Modifier.padding(top = 10.dp),
                     )
-                }
-                val sectionModifier = Modifier.padding(top = 24.dp, bottom = 10.dp)
-                when (val status = uiState.status) {
-                    OAuthStatus.Authorizing -> Box(
-                        modifier = sectionModifier
-                            .fillMaxWidth()
-                            .height(100.dp)
-                            .border(
-                                width = 1.dp,
-                                color = MaterialTheme.colorScheme.surfaceContainerHighest,
-                                shape = RoundedCornerShape(8.dp),
-                            ),
-                    ) {
-                        CircularProgressIndicator(modifier = Modifier.align(Center))
-                    }
-
-                    OAuthStatus.LoginRequired -> {
-                        CtaSection(
-                            message = stringResource(R.string.gravatar_qe_login_required_message_v2),
-                            buttonText = stringResource(id = R.string.gravatar_qe_login_required_cta),
-                            onButtonClick = onStartOAuthClicked,
-                            modifier = sectionModifier,
+                    QESectionMessage(
+                        message = stringResource(R.string.gravatar_qe_oauth_page_message, context.appName),
+                        modifier = Modifier.padding(top = 4.dp),
+                    )
+                    uiState.profile?.let {
+                        ProfileCard(
+                            profile = it,
+                            modifier = Modifier.padding(top = 16.dp),
                         )
                     }
+                    val sectionModifier = Modifier.padding(top = 24.dp, bottom = 10.dp)
+                    when (val status = uiState.status) {
+                        OAuthStatus.Authorizing -> Box(
+                            modifier = sectionModifier
+                                .fillMaxWidth()
+                                .height(100.dp)
+                                .border(
+                                    width = 1.dp,
+                                    color = MaterialTheme.colorScheme.surfaceContainerHighest,
+                                    shape = RoundedCornerShape(8.dp),
+                                ),
+                        ) {
+                            CircularProgressIndicator(modifier = Modifier.align(Center))
+                        }
 
-                    OAuthStatus.WrongEmailAuthorized -> {
-                        CtaSection(
+                        OAuthStatus.LoginRequired -> {
+                            CtaSection(
+                                message = stringResource(R.string.gravatar_qe_login_required_message_v2),
+                                buttonText = stringResource(id = R.string.gravatar_qe_login_required_cta),
+                                onButtonClick = onStartOAuthClicked,
+                                modifier = sectionModifier,
+                            )
+                        }
+
+                        OAuthStatus.WrongEmailAuthorized -> {
+                            CtaSection(
+                                title = stringResource(R.string.gravatar_qe_avatar_picker_server_error_title),
+                                message = stringResource(
+                                    R.string.gravatar_qe_oauth_wrong_email_authenticated_error_message,
+                                    email.toString(),
+                                ),
+                                buttonText = stringResource(id = R.string.gravatar_qe_avatar_picker_session_error_cta),
+                                onButtonClick = onStartOAuthClicked,
+                                modifier = sectionModifier,
+                            )
+                        }
+
+                        is OAuthStatus.EmailAssociatedCheckError -> CtaSection(
                             title = stringResource(R.string.gravatar_qe_avatar_picker_server_error_title),
                             message = stringResource(
-                                R.string.gravatar_qe_oauth_wrong_email_authenticated_error_message,
+                                R.string.gravatar_qe_oauth_email_associated_error_message,
                                 email.toString(),
                             ),
-                            buttonText = stringResource(id = R.string.gravatar_qe_avatar_picker_session_error_cta),
-                            onButtonClick = onStartOAuthClicked,
+                            buttonText = stringResource(id = R.string.gravatar_qe_avatar_picker_error_retry_cta),
+                            onButtonClick = { onEmailAssociationCheckClicked(status.token) },
                             modifier = sectionModifier,
                         )
                     }
-
-                    is OAuthStatus.EmailAssociatedCheckError -> CtaSection(
-                        title = stringResource(R.string.gravatar_qe_avatar_picker_server_error_title),
-                        message = stringResource(
-                            R.string.gravatar_qe_oauth_email_associated_error_message,
-                            email.toString(),
-                        ),
-                        buttonText = stringResource(id = R.string.gravatar_qe_avatar_picker_error_retry_cta),
-                        onButtonClick = { onEmailAssociationCheckClicked(status.token) },
-                        modifier = sectionModifier,
-                    )
                 }
             }
         }
@@ -225,6 +227,7 @@ private fun OAuthPagePreview() {
             uiState = OAuthUiState(),
             email = Email("email"),
             onStartOAuthClicked = { },
+            onDoneClicked = { },
         )
     }
 }
@@ -239,6 +242,7 @@ private fun OAuthPageLoadingPreview() {
             ),
             email = Email("email"),
             onStartOAuthClicked = { },
+            onDoneClicked = { },
         )
     }
 }

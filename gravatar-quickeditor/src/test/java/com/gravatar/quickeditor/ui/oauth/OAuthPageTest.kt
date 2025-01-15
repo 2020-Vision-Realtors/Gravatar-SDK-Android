@@ -16,6 +16,7 @@ class OAuthPageTest : RoborazziTest() {
             ),
             email = Email("email"),
             onStartOAuthClicked = {},
+            onDoneClicked = {},
         )
     }
 
@@ -29,6 +30,7 @@ class OAuthPageTest : RoborazziTest() {
                 ),
                 email = Email("email"),
                 onStartOAuthClicked = {},
+                onDoneClicked = {},
             )
         }
     }
@@ -42,6 +44,7 @@ class OAuthPageTest : RoborazziTest() {
             ),
             email = Email("email"),
             onStartOAuthClicked = {},
+            onDoneClicked = {},
         )
     }
 }
