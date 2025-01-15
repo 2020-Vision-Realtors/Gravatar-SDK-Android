@@ -49,6 +49,7 @@ import coil.compose.AsyncImage
 import com.gravatar.quickeditor.R
 import com.gravatar.quickeditor.ui.components.QEButton
 import com.gravatar.quickeditor.ui.components.QESectionTitle
+import com.gravatar.quickeditor.ui.components.QETopBarTextButton
 import com.gravatar.quickeditor.ui.components.QETopBarWithContent
 import com.gravatar.quickeditor.ui.extensions.QESnackbarHost
 import com.gravatar.quickeditor.ui.extensions.SnackbarType
@@ -113,8 +114,12 @@ internal fun AltTextPage(
 
     GravatarTheme {
         QETopBarWithContent(
-            onLeftButtonClick = onBackPressed,
-            leftButtonLabel = stringResource(R.string.gravatar_qe_avatar_alt_text_cancel_button),
+            leftButton = {
+                QETopBarTextButton(
+                    onClick = onBackPressed,
+                    label = stringResource(R.string.gravatar_qe_avatar_alt_text_cancel_button),
+                )
+            },
         ) {
             Box(
                 modifier = modifier

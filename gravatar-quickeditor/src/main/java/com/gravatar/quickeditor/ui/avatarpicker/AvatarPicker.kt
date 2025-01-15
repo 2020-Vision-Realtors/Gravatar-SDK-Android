@@ -61,6 +61,7 @@ import com.gravatar.quickeditor.ui.components.EmailLabel
 import com.gravatar.quickeditor.ui.components.FailedAvatarUploadAlertDialog
 import com.gravatar.quickeditor.ui.components.PermissionRationaleDialog
 import com.gravatar.quickeditor.ui.components.ProfileCard
+import com.gravatar.quickeditor.ui.components.QETopBarTextButton
 import com.gravatar.quickeditor.ui.components.QETopBarWithContent
 import com.gravatar.quickeditor.ui.cropperlauncher.CropperLauncher
 import com.gravatar.quickeditor.ui.cropperlauncher.UCropCropperLauncher
@@ -132,7 +133,9 @@ internal fun AvatarPicker(
     }
 
     GravatarTheme {
-        QETopBarWithContent(onLeftButtonClick = onDoneClicked) {
+        QETopBarWithContent(
+            leftButton = { QETopBarTextButton(onClick = onDoneClicked) },
+        ) {
             Box(modifier = Modifier.wrapContentSize()) {
                 AvatarPicker(
                     uiState = uiState,

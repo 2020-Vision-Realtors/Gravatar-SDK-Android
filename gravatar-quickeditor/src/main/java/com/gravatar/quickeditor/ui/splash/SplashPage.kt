@@ -11,6 +11,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.gravatar.quickeditor.ui.components.QETopBarTextButton
 import com.gravatar.quickeditor.ui.components.QETopBarWithContent
 import com.gravatar.quickeditor.ui.editor.bottomsheet.DEFAULT_PAGE_HEIGHT
 import com.gravatar.types.Email
@@ -43,7 +44,7 @@ internal fun SplashPage(
     }
 
     GravatarTheme {
-        QETopBarWithContent(onLeftButtonClick = onDoneClicked) {
+        QETopBarWithContent(leftButton = { QETopBarTextButton(onClick = onDoneClicked) }) {
             Surface(modifier = Modifier.height(DEFAULT_PAGE_HEIGHT)) {}
         }
     }

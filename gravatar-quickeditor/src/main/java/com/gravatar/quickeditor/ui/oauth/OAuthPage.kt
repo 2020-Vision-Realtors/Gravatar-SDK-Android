@@ -41,6 +41,7 @@ import com.gravatar.quickeditor.data.appName
 import com.gravatar.quickeditor.ui.components.CtaSection
 import com.gravatar.quickeditor.ui.components.ProfileCard
 import com.gravatar.quickeditor.ui.components.QESectionMessage
+import com.gravatar.quickeditor.ui.components.QETopBarTextButton
 import com.gravatar.quickeditor.ui.components.QETopBarWithContent
 import com.gravatar.types.Email
 import com.gravatar.ui.GravatarTheme
@@ -124,7 +125,7 @@ internal fun OauthPage(
 ) {
     val context = LocalContext.current
     GravatarTheme {
-        QETopBarWithContent(onLeftButtonClick = onDoneClicked) {
+        QETopBarWithContent(leftButton = { QETopBarTextButton(onClick = onDoneClicked) }) {
             Surface {
                 Column(
                     modifier = modifier
