@@ -114,6 +114,7 @@ internal fun AltTextPage(
     GravatarTheme {
         QETopBarWithContent(
             onLeftButtonClick = onBackPressed,
+            leftButtonLabel = stringResource(R.string.gravatar_qe_avatar_alt_text_cancel_button),
         ) {
             Box(
                 modifier = modifier
