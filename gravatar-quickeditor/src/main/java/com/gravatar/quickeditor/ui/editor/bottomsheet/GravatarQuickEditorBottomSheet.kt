@@ -29,7 +29,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.window.core.layout.WindowHeightSizeClass
@@ -43,9 +42,7 @@ import com.composables.core.SheetDetent
 import com.composables.core.SheetDetent.Companion.FullyExpanded
 import com.composables.core.SheetDetent.Companion.Hidden
 import com.composables.core.rememberModalBottomSheetState
-import com.gravatar.GravatarConstants
 import com.gravatar.quickeditor.ui.components.QEDragHandle
-import com.gravatar.quickeditor.ui.components.QETopBar
 import com.gravatar.quickeditor.ui.editor.AuthenticationMethod
 import com.gravatar.quickeditor.ui.editor.AvatarPickerContentLayout
 import com.gravatar.quickeditor.ui.editor.GravatarQuickEditorDismissReason
@@ -95,6 +92,14 @@ internal fun GravatarQuickEditorBottomSheet(
     onDismiss: (dismissReason: GravatarQuickEditorDismissReason) -> Unit = {},
     modalBottomSheetState: ModalBottomSheetState,
 ) {
+    val coroutineScope = rememberCoroutineScope()
+
+    val onDoneClicked: () -> Unit = {
+        coroutineScope.launch {
+            modalBottomSheetState.currentDetent = Hidden
+        }
+    }
+
     CompositionLocalProvider(LocalGravatarTheme provides mainGravatarTheme) {
         GravatarModalBottomSheet(
             onDismiss = onDismiss,
@@ -108,6 +113,7 @@ internal fun GravatarQuickEditorBottomSheet(
                         authToken = authenticationMethod.token,
                         onDismiss = onDismiss,
                         onAvatarSelected = onAvatarSelected,
+                        onDoneClicked = onDoneClicked,
                     )
                 }
 
@@ -117,6 +123,7 @@ internal fun GravatarQuickEditorBottomSheet(
                         oAuthParams = authenticationMethod.oAuthParams,
                         onDismiss = onDismiss,
                         onAvatarSelected = onAvatarSelected,
+                        onDoneClicked = onDoneClicked,
                     )
                 }
             }
@@ -132,7 +139,6 @@ private fun GravatarModalBottomSheet(
     content: @Composable () -> Unit,
 ) {
     val coroutineScope = rememberCoroutineScope()
-    val uriHandler = LocalUriHandler.current
 
     LaunchedEffect(modalBottomSheetState.currentDetent) {
         if (modalBottomSheetState.currentDetent == Hidden) {
@@ -198,16 +204,6 @@ private fun GravatarModalBottomSheet(
                                 horizontalAlignment = Alignment.CenterHorizontally,
                             ) {
                                 QEDragHandle()
-                                QETopBar(
-                                    onDoneClick = {
-                                        coroutineScope.launch {
-                                            modalBottomSheetState.currentDetent = Hidden
-                                        }
-                                    },
-                                    onGravatarIconClick = {
-                                        uriHandler.openUri(GravatarConstants.GRAVATAR_SIGN_IN_URL)
-                                    },
-                                )
                                 content()
                             }
                         }

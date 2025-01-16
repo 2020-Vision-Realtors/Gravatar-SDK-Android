@@ -33,6 +33,7 @@ import com.gravatar.quickeditor.ui.splash.SplashPage
  * @param oAuthParams The OAuth parameters.
  * @param onAvatarSelected The callback for the avatar update.
  *                       Can be invoked multiple times while the Quick Editor is open
+ * @param onDoneClicked The callback for the done action.
  * @param onDismiss The callback for the dismiss action.
  *                  [GravatarQuickEditorError] will be non-null if the dismiss was caused by an error.
  */
@@ -41,6 +42,7 @@ internal fun GravatarQuickEditorPage(
     gravatarQuickEditorParams: GravatarQuickEditorParams,
     oAuthParams: OAuthParams,
     onAvatarSelected: () -> Unit,
+    onDoneClicked: () -> Unit,
     onDismiss: (dismissReason: GravatarQuickEditorDismissReason) -> Unit = {},
 ) {
     val navController = rememberNavController()
@@ -52,7 +54,10 @@ internal fun GravatarQuickEditorPage(
         exitTransition = { ExitTransition.None },
     ) {
         composable(route = QuickEditorPage.SPLASH.name) {
-            SplashPage(email = gravatarQuickEditorParams.email) { isAuthorized ->
+            SplashPage(
+                email = gravatarQuickEditorParams.email,
+                onDoneClicked = onDoneClicked,
+            ) { isAuthorized ->
                 if (isAuthorized) {
                     navController.navigateAndPopupTo(QuickEditorPage.EDITOR.name, QuickEditorPage.SPLASH.name)
                 } else {
@@ -68,6 +73,7 @@ internal fun GravatarQuickEditorPage(
                 onAuthSuccess = {
                     navController.navigateAndPopupTo(QuickEditorPage.EDITOR.name, QuickEditorPage.OAUTH.name)
                 },
+                onDoneClicked = onDoneClicked,
             )
         }
         addAvatarPickerGraph(
@@ -78,6 +84,7 @@ internal fun GravatarQuickEditorPage(
             onSessionExpired = {
                 navController.navigateAndPopupTo(QuickEditorPage.OAUTH.name, QuickEditorPage.EDITOR.name)
             },
+            onDoneClicked = onDoneClicked,
         )
     }
 }
@@ -90,6 +97,7 @@ internal fun GravatarQuickEditorPage(
  * @param authToken The authentication token.
  * @param onAvatarSelected The callback for the avatar update.
  *                       Can be invoked multiple times while the Quick Editor is open
+ * @param onDoneClicked The callback for the done action.
  * @param onDismiss The callback for the dismiss action.
  *                  [GravatarQuickEditorError] will be non-null if the dismiss was caused by an error.
  */
@@ -98,6 +106,7 @@ internal fun GravatarQuickEditorPage(
     gravatarQuickEditorParams: GravatarQuickEditorParams,
     authToken: String,
     onAvatarSelected: () -> Unit,
+    onDoneClicked: () -> Unit,
     onDismiss: (dismissReason: GravatarQuickEditorDismissReason) -> Unit = {},
 ) {
     val navController = rememberNavController()
@@ -120,6 +129,7 @@ internal fun GravatarQuickEditorPage(
             SplashPage(
                 email = gravatarQuickEditorParams.email,
                 token = authToken,
+                onDoneClicked = onDoneClicked,
             ) {
                 navController.navigateAndPopupTo(QuickEditorPage.EDITOR.name, QuickEditorPage.SPLASH.name)
             }
@@ -130,16 +140,19 @@ internal fun GravatarQuickEditorPage(
             navController = navController,
             onAvatarSelected = onAvatarSelected,
             onSessionExpired = { onDismiss(GravatarQuickEditorDismissReason.InvalidToken) },
+            onDoneClicked = onDoneClicked,
         )
     }
 }
 
+@Suppress("LongParameterList")
 private fun NavGraphBuilder.addAvatarPickerGraph(
     navController: NavHostController,
     gravatarQuickEditorParams: GravatarQuickEditorParams,
     handleExpiredSession: Boolean,
     onAvatarSelected: () -> Unit,
     onSessionExpired: () -> Unit,
+    onDoneClicked: () -> Unit,
 ) {
     navigation(
         route = QuickEditorPage.EDITOR.name,
@@ -163,6 +176,7 @@ private fun NavGraphBuilder.addAvatarPickerGraph(
                         route = "${EditorNavDestinations.ALT_TEXT.name}/$email/$avatarId",
                     )
                 },
+                onDoneClicked = onDoneClicked,
             )
         }
         composable(

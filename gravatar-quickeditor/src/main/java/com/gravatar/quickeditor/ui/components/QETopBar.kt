@@ -16,16 +16,20 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.gravatar.GravatarConstants
 import com.gravatar.quickeditor.R
 import com.gravatar.ui.GravatarTheme
 
 @Composable
-internal fun QETopBar(onDoneClick: () -> Unit, modifier: Modifier = Modifier, onGravatarIconClick: () -> Unit = {}) {
+internal fun QETopBar(leftButton: @Composable () -> Unit, modifier: Modifier = Modifier) {
+    val uriHandler = LocalUriHandler.current
+
     GravatarCenterAlignedTopAppBar(
         modifier = modifier,
         title = {
@@ -34,28 +38,36 @@ internal fun QETopBar(onDoneClick: () -> Unit, modifier: Modifier = Modifier, on
                 text = stringResource(id = R.string.gravatar_qe_gravatar),
             )
         },
-        navigationIcon = {
-            TextButton(
-                onClick = onDoneClick,
-            ) {
-                Text(
-                    style = MaterialTheme.typography.labelLarge,
-                    text = stringResource(R.string.gravatar_qe_bottom_sheet_done),
-                )
-            }
-        },
+        navigationIcon = leftButton,
         actions = {
             Icon(
                 painter = painterResource(id = com.gravatar.ui.R.drawable.gravatar_gravatar_icon),
                 tint = MaterialTheme.colorScheme.primary,
                 contentDescription = stringResource(id = R.string.gravatar_qe_gravatar),
                 modifier = Modifier
-                    .clickable(onClick = onGravatarIconClick)
+                    .clickable(onClick = {
+                        uriHandler.openUri(GravatarConstants.GRAVATAR_SIGN_IN_URL)
+                    })
                     .size(34.dp)
                     .padding(end = 8.dp),
             )
         },
     )
+}
+
+@Composable
+internal fun QETopBarTextButton(
+    onClick: () -> Unit,
+    label: String = stringResource(R.string.gravatar_qe_bottom_sheet_done),
+) {
+    TextButton(
+        onClick = onClick,
+    ) {
+        Text(
+            style = MaterialTheme.typography.labelLarge,
+            text = label,
+        )
+    }
 }
 
 private val AppBarHeight = 64.dp
@@ -109,6 +121,6 @@ private fun GravatarCenterAlignedTopAppBar(
 @Composable
 private fun QETopBarPreview() {
     GravatarTheme {
-        QETopBar(onDoneClick = {}, onGravatarIconClick = {})
+        QETopBar(leftButton = { QETopBarTextButton({}) })
     }
 }

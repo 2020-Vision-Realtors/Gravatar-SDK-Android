@@ -11,6 +11,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.gravatar.quickeditor.ui.components.QEPageDefault
 import com.gravatar.quickeditor.ui.editor.bottomsheet.DEFAULT_PAGE_HEIGHT
 import com.gravatar.types.Email
 import com.gravatar.ui.GravatarTheme
@@ -22,6 +23,7 @@ internal fun SplashPage(
     email: Email,
     token: String? = null,
     viewModel: SplashViewModel = viewModel(factory = SplashViewModelFactory(email, token)),
+    onDoneClicked: () -> Unit,
     onAuthorized: (Boolean) -> Unit,
 ) {
     val currentOnAuthorized by rememberUpdatedState(onAuthorized)
@@ -41,6 +43,11 @@ internal fun SplashPage(
     }
 
     GravatarTheme {
-        Surface(modifier = Modifier.height(DEFAULT_PAGE_HEIGHT)) {}
+        QEPageDefault(
+            onDoneClicked = onDoneClicked,
+            content = {
+                Surface(modifier = Modifier.height(DEFAULT_PAGE_HEIGHT)) {}
+            },
+        )
     }
 }
