@@ -40,10 +40,8 @@ import com.gravatar.quickeditor.R
 import com.gravatar.quickeditor.data.appName
 import com.gravatar.quickeditor.ui.components.CtaSection
 import com.gravatar.quickeditor.ui.components.ProfileCard
-import com.gravatar.quickeditor.ui.components.QEPage
+import com.gravatar.quickeditor.ui.components.QEPageDefault
 import com.gravatar.quickeditor.ui.components.QESectionMessage
-import com.gravatar.quickeditor.ui.components.QETopBar
-import com.gravatar.quickeditor.ui.components.QETopBarTextButton
 import com.gravatar.types.Email
 import com.gravatar.ui.GravatarTheme
 import kotlinx.coroutines.Dispatchers
@@ -126,8 +124,8 @@ internal fun OauthPage(
 ) {
     val context = LocalContext.current
     GravatarTheme {
-        QEPage(
-            topBar = { QETopBar(leftButton = { QETopBarTextButton(onClick = onDoneClicked) }) },
+        QEPageDefault(
+            onDoneClicked = onDoneClicked,
             content = {
                 Surface {
                     Column(
