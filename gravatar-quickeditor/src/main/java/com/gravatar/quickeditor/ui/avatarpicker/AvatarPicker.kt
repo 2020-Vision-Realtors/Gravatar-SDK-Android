@@ -30,7 +30,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -213,12 +212,11 @@ internal fun AvatarPicker(uiState: AvatarPickerUiState, onEvent: (AvatarPickerEv
                     modifier = Modifier.padding(start = 16.dp, end = 16.dp, bottom = 24.dp),
                 )
             }
-            key(uiState.avatarUpdates) {
-                ProfileCard(
-                    profile = uiState.profile,
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                )
-            }
+            ProfileCard(
+                profile = uiState.profile,
+                avatarCacheBuster = uiState.avatarCacheBuster.toString(),
+                modifier = Modifier.padding(horizontal = 16.dp),
+            )
             Box(
                 modifier = Modifier
                     .fillMaxWidth()

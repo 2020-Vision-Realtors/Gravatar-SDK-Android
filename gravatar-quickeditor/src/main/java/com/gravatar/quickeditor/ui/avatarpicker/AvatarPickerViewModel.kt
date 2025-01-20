@@ -13,6 +13,8 @@ import com.gravatar.quickeditor.data.models.QuickEditorError
 import com.gravatar.quickeditor.data.repository.AvatarRepository
 import com.gravatar.quickeditor.ui.editor.AvatarPickerContentLayout
 import com.gravatar.quickeditor.ui.editor.GravatarQuickEditorParams
+import com.gravatar.quickeditor.ui.time.Clock
+import com.gravatar.quickeditor.ui.time.SystemClock
 import com.gravatar.restapi.models.Avatar
 import com.gravatar.services.ErrorType
 import com.gravatar.services.GravatarResult
@@ -41,6 +43,7 @@ internal class AvatarPickerViewModel(
     private val avatarRepository: AvatarRepository,
     private val imageDownloader: ImageDownloader,
     private val fileUtils: FileUtils,
+    private val clock: Clock,
 ) : ViewModel() {
     private val _uiState =
         MutableStateFlow(AvatarPickerUiState(email = email, avatarPickerContentLayout = avatarPickerContentLayout))
@@ -194,7 +197,7 @@ internal class AvatarPickerViewModel(
                         _uiState.update { currentState ->
                             currentState.copy(
                                 selectingAvatarId = null,
-                                avatarUpdates = currentState.avatarUpdates.inc(),
+                                avatarCacheBuster = clock.getTimeMillis(),
                             )
                         }
                         _actions.send(AvatarPickerAction.AvatarSelected)
@@ -239,10 +242,10 @@ internal class AvatarPickerViewModel(
                         currentState.copy(
                             uploadingAvatar = null,
                             scrollToIndex = null,
-                            avatarUpdates = if (avatar.selected == true) {
-                                currentState.avatarUpdates.inc()
+                            avatarCacheBuster = if (avatar.selected == true) {
+                                clock.getTimeMillis()
                             } else {
-                                currentState.avatarUpdates
+                                currentState.avatarCacheBuster
                             },
                         )
                     }
@@ -388,10 +391,10 @@ internal class AvatarPickerViewModel(
         if (isSelectedAvatar) _actions.send(AvatarPickerAction.AvatarSelected)
         _uiState.update { currentState ->
             currentState.copy(
-                avatarUpdates = if (isSelectedAvatar) {
-                    currentState.avatarUpdates.inc()
+                avatarCacheBuster = if (isSelectedAvatar) {
+                    clock.getTimeMillis()
                 } else {
-                    currentState.avatarUpdates
+                    currentState.avatarCacheBuster
                 },
             )
         }
@@ -469,6 +472,7 @@ internal class AvatarPickerViewModelFactory(
             avatarRepository = QuickEditorContainer.getInstance().avatarRepository,
             imageDownloader = QuickEditorContainer.getInstance().imageDownloader,
             fileUtils = QuickEditorContainer.getInstance().fileUtils,
+            clock = SystemClock(),
         ) as T
     }
 }
