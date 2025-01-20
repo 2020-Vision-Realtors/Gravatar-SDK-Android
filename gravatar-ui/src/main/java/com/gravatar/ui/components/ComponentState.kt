@@ -42,6 +42,23 @@ public sealed class ComponentState<out T> {
     public data object Empty : ComponentState<Nothing>()
 }
 
+/**
+ * Transforms the loaded value of a [ComponentState] using the provided [transform] function.
+ *
+ * @receiver The [ComponentState] to apply the transformation
+ * @param T The type of the loaded value
+ * @param R The type of the transformed value
+ * @param transform The transformation function
+ * @return A new [ComponentState] with the transformed value
+ */
+public inline fun <T, R> ComponentState<T>.transform(transform: T.() -> R): ComponentState<R> {
+    return when (this) {
+        is Loading -> Loading
+        is Loaded -> Loaded(this.loadedValue.transform())
+        is ComponentState.Empty -> ComponentState.Empty
+    }
+}
+
 @Preview
 @Composable
 internal fun LoadingToLoadedProfileStatePreview(composable: @Composable (state: ComponentState<Profile>) -> Unit = {}) {

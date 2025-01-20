@@ -49,6 +49,10 @@ public final class com/gravatar/ui/components/ComponentState$Loading : com/grava
 	public fun toString ()Ljava/lang/String;
 }
 
+public final class com/gravatar/ui/components/ComponentStateKt {
+	public static final fun transform (Lcom/gravatar/ui/components/ComponentState;Lkotlin/jvm/functions/Function1;)Lcom/gravatar/ui/components/ComponentState;
+}
+
 public final class com/gravatar/ui/components/ComposableSingletons$ComponentStateKt {
 	public static final field INSTANCE Lcom/gravatar/ui/components/ComposableSingletons$ComponentStateKt;
 	public static field lambda-1 Lkotlin/jvm/functions/Function3;
@@ -144,6 +148,7 @@ public final class com/gravatar/ui/components/atomic/AboutMeKt {
 public final class com/gravatar/ui/components/atomic/AvatarKt {
 	public static final fun Avatar-EUb7tLY (Lcom/gravatar/restapi/models/Profile;FLandroidx/compose/ui/Modifier;Lcom/gravatar/AvatarQueryOptions;ZLandroidx/compose/runtime/Composer;II)V
 	public static final fun Avatar-EUb7tLY (Lcom/gravatar/ui/components/ComponentState;FLandroidx/compose/ui/Modifier;Lcom/gravatar/AvatarQueryOptions;ZLandroidx/compose/runtime/Composer;II)V
+	public static final fun Avatar-uFdPcIQ (Lcom/gravatar/ui/components/ComponentState;FLandroidx/compose/ui/Modifier;Landroidx/compose/runtime/Composer;II)V
 }
 
 public final class com/gravatar/ui/components/atomic/ComposableSingletons$AboutMeKt {
