@@ -16,17 +16,25 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.gravatar.AvatarQueryOptions
+import com.gravatar.extensions.avatarUrl
 import com.gravatar.extensions.defaultProfile
 import com.gravatar.restapi.models.Profile
 import com.gravatar.ui.GravatarTheme
 import com.gravatar.ui.components.ComponentState
 import com.gravatar.ui.components.ProfileSummary
 import com.gravatar.ui.components.atomic.Avatar
+import com.gravatar.ui.components.transform
 
 @Composable
-internal fun ProfileCard(profile: ComponentState<Profile>?, modifier: Modifier = Modifier) {
+internal fun ProfileCard(
+    profile: ComponentState<Profile>?,
+    modifier: Modifier = Modifier,
+    avatarCacheBuster: String? = null,
+) {
     GravatarCard(modifier) { backgroundColor ->
         profile?.let {
             ProfileSummary(
@@ -36,11 +44,17 @@ internal fun ProfileCard(profile: ComponentState<Profile>?, modifier: Modifier =
                     .background(backgroundColor)
                     .padding(horizontal = 16.dp, vertical = 11.dp),
                 avatar = {
+                    val sizePx = with(LocalDensity.current) { 72.dp.roundToPx() }
                     Avatar(
-                        state = profile,
+                        state = profile.transform {
+                            avatarUrl(
+                                AvatarQueryOptions {
+                                    preferredSize = sizePx
+                                },
+                            ).url(avatarCacheBuster).toString()
+                        },
                         size = 72.dp,
                         modifier = Modifier.clip(CircleShape),
-                        forceRefresh = true,
                     )
                 },
             )

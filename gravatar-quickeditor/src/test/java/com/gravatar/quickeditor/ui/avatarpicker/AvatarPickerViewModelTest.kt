@@ -11,6 +11,7 @@ import com.gravatar.quickeditor.data.models.QuickEditorError
 import com.gravatar.quickeditor.data.repository.AvatarRepository
 import com.gravatar.quickeditor.ui.CoroutineTestRule
 import com.gravatar.quickeditor.ui.editor.AvatarPickerContentLayout
+import com.gravatar.quickeditor.ui.time.Clock
 import com.gravatar.restapi.models.Avatar
 import com.gravatar.restapi.models.Error
 import com.gravatar.services.ErrorType
@@ -45,6 +46,7 @@ class AvatarPickerViewModelTest {
     private val avatarRepository = mockk<AvatarRepository>()
     private val fileUtils = mockk<FileUtils>()
     private val imageDownloader = mockk<ImageDownloader>()
+    private val clock = mockk<Clock>()
     private val avatarsFlow = MutableSharedFlow<List<Avatar>>(replay = 1)
 
     private lateinit var viewModel: AvatarPickerViewModel
@@ -69,6 +71,7 @@ class AvatarPickerViewModelTest {
         coEvery { profileService.retrieveCatching(email) } returns GravatarResult.Failure(ErrorType.Unknown())
         coEvery { avatarRepository.refreshAvatars(email) } returns GravatarResult.Success(emptyList())
         coEvery { avatarRepository.getAvatars(email) } returns avatarsFlow
+        coEvery { clock.getTimeMillis() } returns 1
     }
 
     @Test
@@ -211,7 +214,6 @@ class AvatarPickerViewModelTest {
                 selectingAvatarId = avatars.last().imageId,
                 scrollToIndex = 0,
                 avatarPickerContentLayout = avatarPickerContentLayout,
-                avatarUpdates = 0,
             )
             assertEquals(
                 avatarPickerUiState,
@@ -220,7 +222,7 @@ class AvatarPickerViewModelTest {
             assertEquals(
                 avatarPickerUiState.copy(
                     selectingAvatarId = null,
-                    avatarUpdates = 1,
+                    avatarCacheBuster = 1,
                 ),
                 awaitItem(),
             )
@@ -672,7 +674,6 @@ class AvatarPickerViewModelTest {
                 uploadingAvatar = uriOne,
                 scrollToIndex = 0,
                 avatarPickerContentLayout = avatarPickerContentLayout,
-                avatarUpdates = 0,
                 nonSelectedAvatarAlertVisible = true,
             )
             assertEquals(
@@ -690,7 +691,7 @@ class AvatarPickerViewModelTest {
                 uploadingAvatar = null,
                 scrollToIndex = null,
                 avatarPickerContentLayout = avatarPickerContentLayout,
-                avatarUpdates = 1,
+                avatarCacheBuster = 1,
                 nonSelectedAvatarAlertVisible = true,
             )
             assertEquals(
@@ -725,7 +726,6 @@ class AvatarPickerViewModelTest {
                 error = null,
                 profile = ComponentState.Loaded(profile),
                 avatarPickerContentLayout = avatarPickerContentLayout,
-                avatarUpdates = 0,
                 scrollToIndex = 0,
                 nonSelectedAvatarAlertVisible = false,
             )
@@ -735,7 +735,7 @@ class AvatarPickerViewModelTest {
             )
 
             avatarPickerUiState = avatarPickerUiState.copy(
-                avatarUpdates = 1,
+                avatarCacheBuster = 1,
             )
             assertEquals(
                 avatarPickerUiState,
@@ -776,7 +776,6 @@ class AvatarPickerViewModelTest {
                 error = null,
                 profile = ComponentState.Loaded(profile),
                 avatarPickerContentLayout = avatarPickerContentLayout,
-                avatarUpdates = 0,
                 scrollToIndex = 0,
                 nonSelectedAvatarAlertVisible = false,
             )
@@ -815,7 +814,6 @@ class AvatarPickerViewModelTest {
                 error = null,
                 profile = ComponentState.Loaded(profile),
                 avatarPickerContentLayout = avatarPickerContentLayout,
-                avatarUpdates = 0,
                 scrollToIndex = 0,
                 nonSelectedAvatarAlertVisible = false,
             )
@@ -854,7 +852,6 @@ class AvatarPickerViewModelTest {
                 error = null,
                 profile = ComponentState.Loaded(profile),
                 avatarPickerContentLayout = avatarPickerContentLayout,
-                avatarUpdates = 0,
                 scrollToIndex = 0,
                 nonSelectedAvatarAlertVisible = false,
             )
@@ -908,7 +905,7 @@ class AvatarPickerViewModelTest {
                     avatarPickerUiState.copy(
                         uploadingAvatar = null,
                         scrollToIndex = null,
-                        avatarUpdates = 1,
+                        avatarCacheBuster = 1,
                     ),
                     awaitItem(),
                 )
@@ -923,7 +920,7 @@ class AvatarPickerViewModelTest {
                         emailAvatars = updatedAvatars.toEmailAvatars(),
                         uploadingAvatar = null,
                         scrollToIndex = null,
-                        avatarUpdates = 1,
+                        avatarCacheBuster = 1,
                         nonSelectedAvatarAlertVisible = false,
                     ),
                     awaitItem(),
@@ -957,7 +954,6 @@ class AvatarPickerViewModelTest {
                 error = null,
                 profile = ComponentState.Loaded(profile),
                 avatarPickerContentLayout = avatarPickerContentLayout,
-                avatarUpdates = 0,
                 scrollToIndex = 0,
             )
             assertEquals(
@@ -966,7 +962,7 @@ class AvatarPickerViewModelTest {
             )
 
             avatarPickerUiState = avatarPickerUiState.copy(
-                avatarUpdates = 1,
+                avatarCacheBuster = 1,
             )
             assertEquals(
                 avatarPickerUiState,
@@ -1209,5 +1205,6 @@ class AvatarPickerViewModelTest {
         avatarRepository = avatarRepository,
         fileUtils = fileUtils,
         imageDownloader = imageDownloader,
+        clock = clock,
     )
 }

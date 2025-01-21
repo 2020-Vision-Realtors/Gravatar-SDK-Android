@@ -94,6 +94,30 @@ public fun Avatar(
     }
 }
 
+/**
+ * [Avatar] is a composable that displays a user's avatar.
+ *
+ * @param state The state of the avatar, when loaded it should contain the Avatar URL
+ * @param size The size of the avatar
+ * @param modifier Composable modifier
+ */
+@Composable
+public fun Avatar(state: ComponentState<String>, size: Dp, modifier: Modifier = Modifier) {
+    when (state) {
+        is ComponentState.Loading -> SkeletonAvatar(size = size, modifier = modifier)
+
+        is ComponentState.Loaded -> {
+            Avatar(
+                model = state.loadedValue,
+                size = size,
+                modifier = modifier,
+            )
+        }
+
+        ComponentState.Empty -> EmptyAvatar(size = size, modifier = modifier)
+    }
+}
+
 @Composable
 private fun SkeletonAvatar(size: Dp, modifier: Modifier = Modifier) {
     Box(
