@@ -3,9 +3,9 @@ package com.gravatar.quickeditor.ui.oauth
 import android.content.Context
 import android.content.ContextWrapper
 import android.content.Intent
-import android.net.Uri
+import android.util.Log
 import androidx.activity.ComponentActivity
-import androidx.browser.customtabs.CustomTabsIntent
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -63,23 +63,25 @@ internal fun OAuthPage(
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     val uiState by viewModel.uiState.collectAsState()
 
-    LaunchedEffect(Unit) {
-        withContext(Dispatchers.Main.immediate) {
-            lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.actions.collect { action ->
-                    when (action) {
-                        OAuthAction.AuthorizationSuccess -> onAuthSuccess()
-                        OAuthAction.AuthorizationFailure -> onAuthError()
-                        OAuthAction.StartOAuth -> launchCustomTab(context, oAuthParams, email)
-                    }
-                }
-            }
+    val oAuthLauncher = rememberLauncherForActivityResult(GravatarOAuthResultContract()) { result ->
+        when (result) {
+            GravatarOAuthResult.DISMISSED -> Unit
+            is GravatarOAuthResult.TOKEN -> viewModel.tokenReceived(email, result.token)
+            GravatarOAuthResult.ERROR -> onAuthError()
         }
     }
 
+    // Kept for backwards-compatibility.
+    // This will be removed in the future and the GravatarOAuthActivity should be used instead.
     if (activity != null) {
         DisposableEffect(Unit) {
             val listener = Consumer<Intent> { newIntent ->
+                Log.w(
+                    "QuickEditor",
+                    "GRAVATAR SDK WARNING: You're using a deprecated version of the Gravatar QuickEditor OAuth " +
+                        "flow. Set up GravatarOAuthActivity in your AndroidManifest.xml to handle the OAuth flow and " +
+                        "to remove this warning message.",
+                )
                 val token = newIntent.data
                     ?.encodedFragment
                     ?.split("&")
@@ -99,6 +101,27 @@ internal fun OAuthPage(
             activity.addOnNewIntentListener(listener)
             onDispose {
                 activity.removeOnNewIntentListener(listener)
+            }
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        withContext(Dispatchers.Main.immediate) {
+            lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+                viewModel.actions.collect { action ->
+                    when (action) {
+                        OAuthAction.AuthorizationSuccess -> onAuthSuccess()
+                        OAuthAction.AuthorizationFailure -> onAuthError()
+                        OAuthAction.StartOAuth -> {
+                            oAuthLauncher.launch(
+                                GravatarOAuthActivityParams(
+                                    oAuthParams = oAuthParams,
+                                    email = email.toString(),
+                                ),
+                            )
+                        }
+                    }
+                }
             }
         }
     }
@@ -207,15 +230,6 @@ internal fun OauthPage(
             },
         )
     }
-}
-
-private fun launchCustomTab(context: Context, oauthParams: OAuthParams, email: Email) {
-    val customTabIntent: CustomTabsIntent = CustomTabsIntent.Builder()
-        .build()
-    customTabIntent.launchUrl(
-        context,
-        Uri.parse(WordPressOauth.buildUrl(oauthParams.clientId, oauthParams.redirectUri, email)),
-    )
 }
 
 internal fun Context.findComponentActivity(): ComponentActivity? = when (this) {
